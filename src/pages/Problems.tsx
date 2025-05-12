@@ -49,8 +49,18 @@ const formSchema = z.object({
   category: z.string().min(1, "La catégorie est requise"),
 });
 
-interface Problem {
-  id: string;
+// Interface pour les données brutes de la base de données
+interface DbProblem {
+  id: number;
+  Problèmes: string | null;
+  Solutions: string | null;
+  user_id: string | null;
+  created_at: string;
+}
+
+// Interface pour l'affichage et la manipulation
+interface ProblemDisplay {
+  id: string | number;
   title: string;
   problem: string;
   solution: string;
@@ -63,42 +73,51 @@ const Problems = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingProblem, setEditingProblem] = useState<Problem | null>(null);
+  const [editingProblem, setEditingProblem] = useState<ProblemDisplay | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
 
   // Fetch problems with React Query
-  const { data: problems = [], isLoading } = useQuery({
+  const { data: problemsData = [], isLoading } = useQuery({
     queryKey: ['problems'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('problems')
+        .from('Quelques problèmes et leurs solutions')
         .select('*')
-        .order('updated_at', { ascending: false });
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Problem[];
+      return data as DbProblem[];
     }
+  });
+
+  // Convert DB data to our display format
+  const problems: ProblemDisplay[] = problemsData.map(item => {
+    // Essayons d'extraire un titre et une catégorie du problème
+    const problemText = item.Problèmes || "Problème sans titre";
+    let title = problemText.split('\n')[0].substring(0, 50); // Première ligne comme titre
+    if (title.length >= 50) title += '...';
+    
+    return {
+      id: item.id,
+      title: title,
+      problem: item.Problèmes || "",
+      solution: item.Solutions || "",
+      tags: [],  // Pas de tags dans la structure actuelle
+      category: "Général", // Catégorie par défaut
+      updated_at: item.created_at
+    };
   });
 
   // Add or update problem mutation
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const processedTags = values.tags
-        .split(",")
-        .map((tag) => tag.trim().toLowerCase())
-        .filter(Boolean);
-
       if (editingProblem) {
         const { error } = await supabase
-          .from('problems')
+          .from('Quelques problèmes et leurs solutions')
           .update({
-            title: values.title,
-            problem: values.problem,
-            solution: values.solution,
-            tags: processedTags,
-            category: values.category,
-            updated_at: new Date().toISOString(),
+            Problèmes: values.problem,
+            Solutions: values.solution,
           })
           .eq('id', editingProblem.id);
           
@@ -106,13 +125,10 @@ const Problems = () => {
         return { action: 'update', values };
       } else {
         const { error } = await supabase
-          .from('problems')
+          .from('Quelques problèmes et leurs solutions')
           .insert({
-            title: values.title,
-            problem: values.problem,
-            solution: values.solution,
-            tags: processedTags,
-            category: values.category,
+            Problèmes: values.problem,
+            Solutions: values.solution,
           });
           
         if (error) throw error;
@@ -142,9 +158,9 @@ const Problems = () => {
 
   // Delete problem mutation
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (id: string | number) => {
       const { error } = await supabase
-        .from('problems')
+        .from('Quelques problèmes et leurs solutions')
         .delete()
         .eq('id', id);
         
@@ -178,11 +194,11 @@ const Problems = () => {
     },
   });
 
-  const handleDeleteProblem = (id: string) => {
+  const handleDeleteProblem = (id: string | number) => {
     deleteMutation.mutate(id);
   };
 
-  const handleEditProblem = (problem: Problem) => {
+  const handleEditProblem = (problem: ProblemDisplay) => {
     setEditingProblem(problem);
     form.reset({
       title: problem.title,

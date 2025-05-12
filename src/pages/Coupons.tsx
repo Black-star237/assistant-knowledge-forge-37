@@ -49,7 +49,20 @@ const formSchema = z.object({
 
 // Définir le type de coupon pour assurer la cohérence
 interface Coupon {
-  id: string;
+  id: number;
+  code_du_coupon: string | null;
+  commentaire: string | null;
+  "description visuelle": string | null;
+  image_url: string | null;
+  jour: string | null;
+  Heure: string | null;
+  created_at: string;
+  user_id: string | null;
+}
+
+// Interface pour mapper les données de Supabase vers notre format d'affichage
+interface CouponDisplay {
+  id: string | number;
   title: string;
   description: string;
   code: string;
@@ -62,14 +75,14 @@ const Coupons = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
+  const [editingCoupon, setEditingCoupon] = useState<CouponDisplay | null>(null);
 
   // Fetch coupons with React Query
-  const { data: coupons = [], isLoading } = useQuery({
+  const { data: couponsData = [], isLoading } = useQuery({
     queryKey: ['coupons'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('coupons')
+        .from('Coupons')
         .select('*')
         .order('created_at', { ascending: false });
       
@@ -78,18 +91,28 @@ const Coupons = () => {
     }
   });
 
+  // Convert Supabase data to our display format
+  const coupons: CouponDisplay[] = couponsData.map(coupon => ({
+    id: coupon.id,
+    title: coupon.commentaire || "Sans titre",
+    description: coupon["description visuelle"] || "Pas de description",
+    code: coupon.code_du_coupon || "",
+    odds: "1.00", // Valeur par défaut car ce champ n'existe pas dans votre table
+    expiry_date: coupon.jour || new Date().toISOString().split('T')[0],
+    created_at: coupon.created_at
+  }));
+
   // Add or update coupon mutation
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
       if (editingCoupon) {
         const { error } = await supabase
-          .from('coupons')
+          .from('Coupons')
           .update({
-            title: values.title,
-            description: values.description,
-            code: values.code,
-            odds: values.odds,
-            expiry_date: values.expiryDate,
+            commentaire: values.title,
+            "description visuelle": values.description,
+            code_du_coupon: values.code,
+            jour: values.expiryDate,
           })
           .eq('id', editingCoupon.id);
           
@@ -97,13 +120,12 @@ const Coupons = () => {
         return { action: 'update', values };
       } else {
         const { error } = await supabase
-          .from('coupons')
+          .from('Coupons')
           .insert({
-            title: values.title,
-            description: values.description,
-            code: values.code,
-            odds: values.odds,
-            expiry_date: values.expiryDate,
+            commentaire: values.title,
+            "description visuelle": values.description,
+            code_du_coupon: values.code,
+            jour: values.expiryDate,
           });
           
         if (error) throw error;
@@ -133,9 +155,9 @@ const Coupons = () => {
 
   // Delete coupon mutation
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (id: string | number) => {
       const { error } = await supabase
-        .from('coupons')
+        .from('Coupons')
         .delete()
         .eq('id', id);
         
@@ -177,11 +199,11 @@ const Coupons = () => {
     });
   };
 
-  const handleDeleteCoupon = (id: string) => {
+  const handleDeleteCoupon = (id: string | number) => {
     deleteMutation.mutate(id);
   };
 
-  const handleEditCoupon = (coupon: Coupon) => {
+  const handleEditCoupon = (coupon: CouponDisplay) => {
     setEditingCoupon(coupon);
     form.reset({
       title: coupon.title,
