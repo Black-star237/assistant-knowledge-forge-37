@@ -19,7 +19,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -46,9 +45,20 @@ const formSchema = z.object({
   expiryDate: z.string().min(1, "La date d'expiration est requise"),
 });
 
+// Définir le type de coupon pour assurer la cohérence
+interface Coupon {
+  id: number;
+  title: string;
+  description: string;
+  code: string;
+  odds: string;
+  expiryDate: string;
+  createdAt: string;
+}
+
 const Coupons = () => {
   const { toast } = useToast();
-  const [coupons, setCoupons] = useState([
+  const [coupons, setCoupons] = useState<Coupon[]>([
     {
       id: 1,
       title: "Combiné Football du weekend",
@@ -79,7 +89,7 @@ const Coupons = () => {
   ]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingCoupon, setEditingCoupon] = useState<any>(null);
+  const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -108,7 +118,7 @@ const Coupons = () => {
     });
   };
 
-  const handleEditCoupon = (coupon: any) => {
+  const handleEditCoupon = (coupon: Coupon) => {
     setEditingCoupon(coupon);
     form.reset({
       title: coupon.title,
@@ -132,9 +142,14 @@ const Coupons = () => {
         description: "Les modifications ont été enregistrées avec succès.",
       });
     } else {
-      const newCoupon = {
+      // Utiliser le typage explicite pour s'assurer que tous les champs requis sont présents
+      const newCoupon: Coupon = {
         id: Math.max(0, ...coupons.map((c) => c.id)) + 1,
-        ...values,
+        title: values.title,
+        description: values.description,
+        code: values.code,
+        odds: values.odds,
+        expiryDate: values.expiryDate,
         createdAt: new Date().toISOString().split("T")[0],
       };
       setCoupons([newCoupon, ...coupons]);
@@ -161,7 +176,7 @@ const Coupons = () => {
   };
 
   return (
-    <SidebarProvider defaultCollapsed={false} collapsedWidth={70}>
+    <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <div className="flex flex-1 flex-col">

@@ -9,7 +9,7 @@ import { FileText, Bookmark, HelpCircle, Info, ArrowRight, MessageSquare } from 
 
 const Index = () => {
   return (
-    <SidebarProvider defaultCollapsed={false} collapsedWidth={70}>
+    <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <div className="flex flex-1 flex-col">

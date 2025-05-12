@@ -24,7 +24,10 @@ import {
 } from "@/components/ui/sidebar";
 
 export function AppSidebar() {
-  const { collapsed } = useSidebar();
+  // Récupérer l'état du sidebar depuis le hook
+  const sidebarContext = useSidebar();
+  // Utiliser l'état du contexte pour déterminer si le sidebar est replié
+  const collapsed = sidebarContext.state === "collapsed";
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -76,7 +79,7 @@ export function AppSidebar() {
         "border-r border-sidebar-border bg-sidebar transition-all duration-300 ease-in-out",
         collapsed ? "w-[70px]" : "w-64"
       )}
-      collapsible
+      collapsible="icon"
     >
       <SidebarTrigger className="m-2 self-end text-sidebar-foreground hover:text-primary">
         <PanelLeft size={18} />

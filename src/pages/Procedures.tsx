@@ -25,7 +25,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -51,9 +50,19 @@ const formSchema = z.object({
   category: z.string().min(1, "La catégorie est requise"),
 });
 
+// Définir le type de procédure pour assurer la cohérence
+interface Procedure {
+  id: number;
+  title: string;
+  description: string;
+  steps: string;
+  category: string;
+  updatedAt: string;
+}
+
 const Procedures = () => {
   const { toast } = useToast();
-  const [procedures, setProcedures] = useState([
+  const [procedures, setProcedures] = useState<Procedure[]>([
     {
       id: 1,
       title: "Comment créer un compte",
@@ -81,7 +90,7 @@ const Procedures = () => {
   ]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingProcedure, setEditingProcedure] = useState<any>(null);
+  const [editingProcedure, setEditingProcedure] = useState<Procedure | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -101,7 +110,7 @@ const Procedures = () => {
     });
   };
 
-  const handleEditProcedure = (procedure: any) => {
+  const handleEditProcedure = (procedure: Procedure) => {
     setEditingProcedure(procedure);
     form.reset({
       title: procedure.title,
@@ -126,9 +135,13 @@ const Procedures = () => {
         description: "Les modifications ont été enregistrées avec succès.",
       });
     } else {
-      const newProcedure = {
+      // Utiliser le typage explicite pour s'assurer que tous les champs requis sont présents
+      const newProcedure: Procedure = {
         id: Math.max(0, ...procedures.map((p) => p.id)) + 1,
-        ...values,
+        title: values.title,
+        description: values.description,
+        steps: values.steps,
+        category: values.category,
         updatedAt: new Date().toISOString().split("T")[0],
       };
       setProcedures([newProcedure, ...procedures]);
@@ -149,7 +162,7 @@ const Procedures = () => {
   };
 
   // Group procedures by category
-  const proceduresByCategory: Record<string, typeof procedures> = {};
+  const proceduresByCategory: Record<string, Procedure[]> = {};
   procedures.forEach((procedure) => {
     if (!proceduresByCategory[procedure.category]) {
       proceduresByCategory[procedure.category] = [];
@@ -158,7 +171,7 @@ const Procedures = () => {
   });
 
   return (
-    <SidebarProvider defaultCollapsed={false} collapsedWidth={70}>
+    <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <div className="flex flex-1 flex-col">

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -184,7 +183,7 @@ const Problems = () => {
   });
 
   return (
-    <SidebarProvider defaultCollapsed={false} collapsedWidth={70}>
+    <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <div className="flex flex-1 flex-col">
