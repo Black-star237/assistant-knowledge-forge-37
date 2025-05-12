@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -37,11 +37,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Edit, Trash2, Check, FileText } from "lucide-react";
+import { Plus, Edit, Trash2, Check, FileText, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const formSchema = z.object({
   title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
@@ -52,45 +54,112 @@ const formSchema = z.object({
 
 // Définir le type de procédure pour assurer la cohérence
 interface Procedure {
-  id: number;
+  id: string;
   title: string;
   description: string;
   steps: string;
   category: string;
-  updatedAt: string;
+  updated_at: string;
 }
 
 const Procedures = () => {
   const { toast } = useToast();
-  const [procedures, setProcedures] = useState<Procedure[]>([
-    {
-      id: 1,
-      title: "Comment créer un compte",
-      description: "Procédure pour créer un nouveau compte utilisateur",
-      steps: "1. Accédez à la page d'inscription\n2. Remplissez le formulaire avec vos informations\n3. Vérifiez votre email\n4. Confirmez votre inscription en cliquant sur le lien\n5. Complétez votre profil",
-      category: "Inscription",
-      updatedAt: "2025-05-08",
-    },
-    {
-      id: 2,
-      title: "Comment placer un pari",
-      description: "Étapes pour placer un pari sur notre plateforme",
-      steps: "1. Connectez-vous à votre compte\n2. Accédez à la section paris\n3. Sélectionnez l'événement sportif\n4. Choisissez votre type de pari\n5. Entrez le montant\n6. Confirmez votre mise",
-      category: "Paris",
-      updatedAt: "2025-05-10",
-    },
-    {
-      id: 3,
-      title: "Procédure de retrait",
-      description: "Comment effectuer un retrait de vos gains",
-      steps: "1. Allez dans la section 'Mon compte'\n2. Sélectionnez 'Retrait'\n3. Choisissez votre méthode de retrait\n4. Entrez le montant souhaité\n5. Confirmez la transaction\n6. Attendez la validation (24-48h)",
-      category: "Paiement",
-      updatedAt: "2025-05-11",
-    },
-  ]);
-
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProcedure, setEditingProcedure] = useState<Procedure | null>(null);
+
+  // Fetch procedures with React Query
+  const { data: procedures = [], isLoading } = useQuery({
+    queryKey: ['procedures'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('procedures')
+        .select('*')
+        .order('updated_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as Procedure[];
+    }
+  });
+
+  // Add or update procedure mutation
+  const mutation = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      if (editingProcedure) {
+        const { error } = await supabase
+          .from('procedures')
+          .update({
+            title: values.title,
+            description: values.description,
+            steps: values.steps,
+            category: values.category,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editingProcedure.id);
+          
+        if (error) throw error;
+        return { action: 'update', values };
+      } else {
+        const { error } = await supabase
+          .from('procedures')
+          .insert({
+            title: values.title,
+            description: values.description,
+            steps: values.steps,
+            category: values.category,
+          });
+          
+        if (error) throw error;
+        return { action: 'insert', values };
+      }
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['procedures'] });
+      toast({
+        title: result.action === 'update' ? "Procédure modifiée !" : "Procédure ajoutée !",
+        description: result.action === 'update' 
+          ? "Les modifications ont été enregistrées avec succès." 
+          : "La nouvelle procédure a été créée avec succès.",
+      });
+      setDialogOpen(false);
+      setEditingProcedure(null);
+      form.reset();
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: `Une erreur s'est produite: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Delete procedure mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('procedures')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (id) => {
+      queryClient.invalidateQueries({ queryKey: ['procedures'] });
+      toast({
+        title: "Procédure supprimée",
+        description: "La procédure a été supprimée avec succès.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: `Une erreur s'est produite: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -102,12 +171,8 @@ const Procedures = () => {
     },
   });
 
-  const handleDeleteProcedure = (id: number) => {
-    setProcedures(procedures.filter((procedure) => procedure.id !== id));
-    toast({
-      title: "Procédure supprimée",
-      description: "La procédure a été supprimée avec succès.",
-    });
+  const handleDeleteProcedure = (id: string) => {
+    deleteMutation.mutate(id);
   };
 
   const handleEditProcedure = (procedure: Procedure) => {
@@ -122,37 +187,7 @@ const Procedures = () => {
   };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    if (editingProcedure) {
-      setProcedures(
-        procedures.map((procedure) =>
-          procedure.id === editingProcedure.id
-            ? { ...procedure, ...values, updatedAt: new Date().toISOString().split("T")[0] }
-            : procedure
-        )
-      );
-      toast({
-        title: "Procédure modifiée !",
-        description: "Les modifications ont été enregistrées avec succès.",
-      });
-    } else {
-      // Utiliser le typage explicite pour s'assurer que tous les champs requis sont présents
-      const newProcedure: Procedure = {
-        id: Math.max(0, ...procedures.map((p) => p.id)) + 1,
-        title: values.title,
-        description: values.description,
-        steps: values.steps,
-        category: values.category,
-        updatedAt: new Date().toISOString().split("T")[0],
-      };
-      setProcedures([newProcedure, ...procedures]);
-      toast({
-        title: "Procédure ajoutée !",
-        description: "La nouvelle procédure a été créée avec succès.",
-      });
-    }
-    setDialogOpen(false);
-    setEditingProcedure(null);
-    form.reset();
+    mutation.mutate(values);
   };
 
   const handleAddNew = () => {
@@ -190,77 +225,87 @@ const Procedures = () => {
                 </Button>
               </div>
 
-              {Object.keys(proceduresByCategory).length > 0 ? (
-                Object.entries(proceduresByCategory).map(([category, categoryProcedures]) => (
-                  <div key={category} className="mb-6">
-                    <h2 className="mb-3 text-lg font-semibold">{category}</h2>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {categoryProcedures.map((procedure) => (
-                        <Card key={procedure.id} className="overflow-hidden">
-                          <CardHeader className="pb-2">
-                            <div className="flex items-center justify-between">
-                              <CardTitle className="text-base">{procedure.title}</CardTitle>
-                              <div className="rounded-full bg-primary/10 p-1.5 text-primary">
-                                <FileText className="h-4 w-4" />
-                              </div>
-                            </div>
-                            <CardDescription>{procedure.description}</CardDescription>
-                          </CardHeader>
-                          <CardContent className="pb-2">
-                            <Accordion type="single" collapsible className="w-full">
-                              <AccordionItem value="steps">
-                                <AccordionTrigger className="text-sm font-medium py-2">
-                                  Voir les étapes
-                                </AccordionTrigger>
-                                <AccordionContent className="text-sm">
-                                  <div className="whitespace-pre-line">
-                                    {procedure.steps}
-                                  </div>
-                                </AccordionContent>
-                              </AccordionItem>
-                            </Accordion>
-                          </CardContent>
-                          <CardFooter className="border-t bg-muted/50 px-6 py-3">
-                            <div className="flex items-center justify-between w-full text-xs text-muted-foreground">
-                              <span>Mis à jour le {procedure.updatedAt}</span>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={() => handleEditProcedure(procedure)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-destructive"
-                                  onClick={() => handleDeleteProcedure(procedure.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </CardFooter>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
-                  <div className="rounded-full bg-primary/10 p-4 text-primary">
-                    <FileText className="h-6 w-6" />
-                  </div>
-                  <h3 className="mt-4 text-lg font-semibold">Aucune procédure</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Vous n'avez pas encore créé de procédure. Ajoutez-en une maintenant.
-                  </p>
-                  <Button onClick={handleAddNew} className="mt-4">
-                    <Plus className="mr-2 h-4 w-4" /> Ajouter une procédure
-                  </Button>
+              {isLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="ml-2">Chargement des procédures...</span>
                 </div>
+              ) : (
+                <>
+                  {Object.keys(proceduresByCategory).length > 0 ? (
+                    Object.entries(proceduresByCategory).map(([category, categoryProcedures]) => (
+                      <div key={category} className="mb-6">
+                        <h2 className="mb-3 text-lg font-semibold">{category}</h2>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          {categoryProcedures.map((procedure) => (
+                            <Card key={procedure.id} className="overflow-hidden">
+                              <CardHeader className="pb-2">
+                                <div className="flex items-center justify-between">
+                                  <CardTitle className="text-base">{procedure.title}</CardTitle>
+                                  <div className="rounded-full bg-primary/10 p-1.5 text-primary">
+                                    <FileText className="h-4 w-4" />
+                                  </div>
+                                </div>
+                                <CardDescription>{procedure.description}</CardDescription>
+                              </CardHeader>
+                              <CardContent className="pb-2">
+                                <Accordion type="single" collapsible className="w-full">
+                                  <AccordionItem value="steps">
+                                    <AccordionTrigger className="text-sm font-medium py-2">
+                                      Voir les étapes
+                                    </AccordionTrigger>
+                                    <AccordionContent className="text-sm">
+                                      <div className="whitespace-pre-line">
+                                        {procedure.steps}
+                                      </div>
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                </Accordion>
+                              </CardContent>
+                              <CardFooter className="border-t bg-muted/50 px-6 py-3">
+                                <div className="flex items-center justify-between w-full text-xs text-muted-foreground">
+                                  <span>Mis à jour le {new Date(procedure.updated_at).toLocaleDateString()}</span>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7"
+                                      onClick={() => handleEditProcedure(procedure)}
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-destructive"
+                                      onClick={() => handleDeleteProcedure(procedure.id)}
+                                      disabled={deleteMutation.isPending}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </CardFooter>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
+                      <div className="rounded-full bg-primary/10 p-4 text-primary">
+                        <FileText className="h-6 w-6" />
+                      </div>
+                      <h3 className="mt-4 text-lg font-semibold">Aucune procédure</h3>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Vous n'avez pas encore créé de procédure. Ajoutez-en une maintenant.
+                      </p>
+                      <Button onClick={handleAddNew} className="mt-4">
+                        <Plus className="mr-2 h-4 w-4" /> Ajouter une procédure
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </main>
@@ -348,9 +393,21 @@ const Procedures = () => {
               />
 
               <DialogFooter>
-                <Button type="submit">
-                  <Check className="mr-2 h-4 w-4" />
-                  {editingProcedure ? "Enregistrer les modifications" : "Ajouter la procédure"}
+                <Button 
+                  type="submit" 
+                  disabled={mutation.isPending}
+                >
+                  {mutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Enregistrement...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="mr-2 h-4 w-4" />
+                      {editingProcedure ? "Enregistrer les modifications" : "Ajouter la procédure"}
+                    </>
+                  )}
                 </Button>
               </DialogFooter>
             </form>

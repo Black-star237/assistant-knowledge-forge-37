@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -30,11 +31,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Edit, Trash2, Check, HelpCircle, Search } from "lucide-react";
+import { Plus, Edit, Trash2, Check, HelpCircle, Search, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -46,42 +49,123 @@ const formSchema = z.object({
   category: z.string().min(1, "La catégorie est requise"),
 });
 
+interface Problem {
+  id: string;
+  title: string;
+  problem: string;
+  solution: string;
+  tags: string[];
+  category: string;
+  updated_at: string;
+}
+
 const Problems = () => {
   const { toast } = useToast();
-  const [problems, setProblems] = useState([
-    {
-      id: 1,
-      title: "Problème de connexion",
-      problem: "Je ne peux pas me connecter à mon compte malgré plusieurs tentatives.",
-      solution: "1. Vérifiez que vous utilisez la bonne adresse email\n2. Utilisez l'option 'Mot de passe oublié'\n3. Assurez-vous que votre compte n'est pas bloqué\n4. Essayez de vous connecter depuis un autre appareil",
-      category: "Compte",
-      tags: ["connexion", "authentification"],
-      updatedAt: "2025-05-10",
-    },
-    {
-      id: 2,
-      title: "Pari non validé",
-      problem: "J'ai placé un pari mais il n'apparaît pas dans mon historique.",
-      solution: "1. Vérifiez vos notifications pour confirmer que le pari a été placé\n2. Attendez quelques minutes car le système peut mettre du temps à se mettre à jour\n3. Vérifiez que votre compte a été débité\n4. Si le problème persiste, contactez le service client avec votre ID de transaction",
-      category: "Paris",
-      tags: ["pari", "validation", "historique"],
-      updatedAt: "2025-05-11",
-    },
-    {
-      id: 3,
-      title: "Retrait bloqué",
-      problem: "Mon retrait est en attente depuis plus de 48h.",
-      solution: "1. Vérifiez que vous avez complété la vérification d'identité\n2. Assurez-vous que votre méthode de paiement est valide\n3. Certaines méthodes de retrait peuvent prendre jusqu'à 5 jours ouvrables\n4. Si le statut est 'En révision', votre retrait est en cours d'examen par notre équipe",
-      category: "Paiement",
-      tags: ["retrait", "paiement", "délai"],
-      updatedAt: "2025-05-09",
-    },
-  ]);
-
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingProblem, setEditingProblem] = useState<any>(null);
+  const [editingProblem, setEditingProblem] = useState<Problem | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
+
+  // Fetch problems with React Query
+  const { data: problems = [], isLoading } = useQuery({
+    queryKey: ['problems'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('problems')
+        .select('*')
+        .order('updated_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as Problem[];
+    }
+  });
+
+  // Add or update problem mutation
+  const mutation = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      const processedTags = values.tags
+        .split(",")
+        .map((tag) => tag.trim().toLowerCase())
+        .filter(Boolean);
+
+      if (editingProblem) {
+        const { error } = await supabase
+          .from('problems')
+          .update({
+            title: values.title,
+            problem: values.problem,
+            solution: values.solution,
+            tags: processedTags,
+            category: values.category,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editingProblem.id);
+          
+        if (error) throw error;
+        return { action: 'update', values };
+      } else {
+        const { error } = await supabase
+          .from('problems')
+          .insert({
+            title: values.title,
+            problem: values.problem,
+            solution: values.solution,
+            tags: processedTags,
+            category: values.category,
+          });
+          
+        if (error) throw error;
+        return { action: 'insert', values };
+      }
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['problems'] });
+      toast({
+        title: result.action === 'update' ? "Problème modifié !" : "Problème ajouté !",
+        description: result.action === 'update' 
+          ? "Les modifications ont été enregistrées avec succès." 
+          : "Le nouveau problème et sa solution ont été créés avec succès.",
+      });
+      setDialogOpen(false);
+      setEditingProblem(null);
+      form.reset();
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: `Une erreur s'est produite: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Delete problem mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('problems')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (id) => {
+      queryClient.invalidateQueries({ queryKey: ['problems'] });
+      toast({
+        title: "Problème supprimé",
+        description: "Le problème et sa solution ont été supprimés avec succès.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: `Une erreur s'est produite: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -94,15 +178,11 @@ const Problems = () => {
     },
   });
 
-  const handleDeleteProblem = (id: number) => {
-    setProblems(problems.filter((problem) => problem.id !== id));
-    toast({
-      title: "Problème supprimé",
-      description: "Le problème et sa solution ont été supprimés avec succès.",
-    });
+  const handleDeleteProblem = (id: string) => {
+    deleteMutation.mutate(id);
   };
 
-  const handleEditProblem = (problem: any) => {
+  const handleEditProblem = (problem: Problem) => {
     setEditingProblem(problem);
     form.reset({
       title: problem.title,
@@ -115,50 +195,7 @@ const Problems = () => {
   };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    const processedTags = values.tags
-      .split(",")
-      .map((tag) => tag.trim().toLowerCase())
-      .filter(Boolean);
-
-    if (editingProblem) {
-      setProblems(
-        problems.map((problem) =>
-          problem.id === editingProblem.id
-            ? {
-                ...problem,
-                title: values.title,
-                problem: values.problem,
-                solution: values.solution,
-                tags: processedTags,
-                category: values.category,
-                updatedAt: new Date().toISOString().split("T")[0],
-              }
-            : problem
-        )
-      );
-      toast({
-        title: "Problème modifié !",
-        description: "Les modifications ont été enregistrées avec succès.",
-      });
-    } else {
-      const newProblem = {
-        id: Math.max(0, ...problems.map((p) => p.id)) + 1,
-        title: values.title,
-        problem: values.problem,
-        solution: values.solution,
-        tags: processedTags,
-        category: values.category,
-        updatedAt: new Date().toISOString().split("T")[0],
-      };
-      setProblems([newProblem, ...problems]);
-      toast({
-        title: "Problème ajouté !",
-        description: "Le nouveau problème et sa solution ont été créés avec succès.",
-      });
-    }
-    setDialogOpen(false);
-    setEditingProblem(null);
-    form.reset();
+    mutation.mutate(values);
   };
 
   const handleAddNew = () => {
@@ -214,24 +251,31 @@ const Problems = () => {
                     />
                   </div>
                   
-                  <Tabs
-                    defaultValue="all"
-                    className="w-full sm:w-auto"
-                    value={activeCategory}
-                    onValueChange={setActiveCategory}
-                  >
-                    <TabsList className="w-full sm:w-auto">
-                      {categories.map((category) => (
-                        <TabsTrigger key={category} value={category} className="capitalize">
-                          {category}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
-                  </Tabs>
+                  {!isLoading && (
+                    <Tabs
+                      defaultValue="all"
+                      className="w-full sm:w-auto"
+                      value={activeCategory}
+                      onValueChange={setActiveCategory}
+                    >
+                      <TabsList className="w-full sm:w-auto">
+                        {categories.map((category) => (
+                          <TabsTrigger key={category} value={category} className="capitalize">
+                            {category}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </Tabs>
+                  )}
                 </div>
               </div>
 
-              {filteredProblems.length > 0 ? (
+              {isLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="ml-2">Chargement des problèmes...</span>
+                </div>
+              ) : filteredProblems.length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-2">
                   {filteredProblems.map((problem) => (
                     <Card key={problem.id} className="overflow-hidden">
@@ -267,7 +311,7 @@ const Problems = () => {
                       <CardFooter className="border-t bg-muted/50 px-6 py-3">
                         <div className="flex items-center justify-between w-full text-xs text-muted-foreground">
                           <div className="flex items-center gap-2">
-                            <span>Mis à jour le {problem.updatedAt}</span>
+                            <span>Mis à jour le {new Date(problem.updated_at).toLocaleDateString()}</span>
                             <span>•</span>
                             <span className="capitalize">{problem.category}</span>
                           </div>
@@ -285,6 +329,7 @@ const Problems = () => {
                               size="icon"
                               className="h-7 w-7 text-destructive"
                               onClick={() => handleDeleteProblem(problem.id)}
+                              disabled={deleteMutation.isPending}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -423,9 +468,21 @@ const Problems = () => {
               />
 
               <DialogFooter>
-                <Button type="submit">
-                  <Check className="mr-2 h-4 w-4" />
-                  {editingProblem ? "Enregistrer les modifications" : "Ajouter le problème"}
+                <Button 
+                  type="submit" 
+                  disabled={mutation.isPending}
+                >
+                  {mutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Enregistrement...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="mr-2 h-4 w-4" />
+                      {editingProblem ? "Enregistrer les modifications" : "Ajouter le problème"}
+                    </>
+                  )}
                 </Button>
               </DialogFooter>
             </form>

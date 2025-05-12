@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -31,11 +31,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Edit, Trash2, Copy, Check } from "lucide-react";
+import { Plus, Edit, Trash2, Copy, Check, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const formSchema = z.object({
   title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
@@ -47,49 +49,114 @@ const formSchema = z.object({
 
 // Définir le type de coupon pour assurer la cohérence
 interface Coupon {
-  id: number;
+  id: string;
   title: string;
   description: string;
   code: string;
   odds: string;
-  expiryDate: string;
-  createdAt: string;
+  expiry_date: string;
+  created_at: string;
 }
 
 const Coupons = () => {
   const { toast } = useToast();
-  const [coupons, setCoupons] = useState<Coupon[]>([
-    {
-      id: 1,
-      title: "Combiné Football du weekend",
-      description: "PSG vs Marseille, Bayern vs Dortmund, Real Madrid vs Barcelona",
-      code: "FOOT-2023-1",
-      odds: "5.75",
-      expiryDate: "2025-05-15",
-      createdAt: "2025-05-10",
-    },
-    {
-      id: 2,
-      title: "Tennis - Roland Garros",
-      description: "Prédictions pour les demi-finales de Roland Garros",
-      code: "TENNIS-RG-24",
-      odds: "3.25",
-      expiryDate: "2025-05-20",
-      createdAt: "2025-05-08",
-    },
-    {
-      id: 3,
-      title: "Basketball NBA",
-      description: "Lakers vs Celtics, Nets vs Heat",
-      code: "NBA-2023-45",
-      odds: "4.50",
-      expiryDate: "2025-05-18",
-      createdAt: "2025-05-11",
-    },
-  ]);
-
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
+
+  // Fetch coupons with React Query
+  const { data: coupons = [], isLoading } = useQuery({
+    queryKey: ['coupons'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('coupons')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as Coupon[];
+    }
+  });
+
+  // Add or update coupon mutation
+  const mutation = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      if (editingCoupon) {
+        const { error } = await supabase
+          .from('coupons')
+          .update({
+            title: values.title,
+            description: values.description,
+            code: values.code,
+            odds: values.odds,
+            expiry_date: values.expiryDate,
+          })
+          .eq('id', editingCoupon.id);
+          
+        if (error) throw error;
+        return { action: 'update', values };
+      } else {
+        const { error } = await supabase
+          .from('coupons')
+          .insert({
+            title: values.title,
+            description: values.description,
+            code: values.code,
+            odds: values.odds,
+            expiry_date: values.expiryDate,
+          });
+          
+        if (error) throw error;
+        return { action: 'insert', values };
+      }
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['coupons'] });
+      toast({
+        title: result.action === 'update' ? "Coupon modifié !" : "Coupon ajouté !",
+        description: result.action === 'update' 
+          ? "Les modifications ont été enregistrées avec succès." 
+          : "Le nouveau coupon a été créé avec succès.",
+      });
+      setDialogOpen(false);
+      setEditingCoupon(null);
+      form.reset();
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: `Une erreur s'est produite: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Delete coupon mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('coupons')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (id) => {
+      queryClient.invalidateQueries({ queryKey: ['coupons'] });
+      toast({
+        title: "Coupon supprimé",
+        description: "Le coupon a été supprimé avec succès.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: `Une erreur s'est produite: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -110,12 +177,8 @@ const Coupons = () => {
     });
   };
 
-  const handleDeleteCoupon = (id: number) => {
-    setCoupons(coupons.filter((coupon) => coupon.id !== id));
-    toast({
-      title: "Coupon supprimé",
-      description: "Le coupon a été supprimé avec succès.",
-    });
+  const handleDeleteCoupon = (id: string) => {
+    deleteMutation.mutate(id);
   };
 
   const handleEditCoupon = (coupon: Coupon) => {
@@ -125,42 +188,13 @@ const Coupons = () => {
       description: coupon.description,
       code: coupon.code,
       odds: coupon.odds,
-      expiryDate: coupon.expiryDate,
+      expiryDate: coupon.expiry_date.split('T')[0],
     });
     setDialogOpen(true);
   };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    if (editingCoupon) {
-      setCoupons(
-        coupons.map((coupon) =>
-          coupon.id === editingCoupon.id ? { ...coupon, ...values } : coupon
-        )
-      );
-      toast({
-        title: "Coupon modifié !",
-        description: "Les modifications ont été enregistrées avec succès.",
-      });
-    } else {
-      // Utiliser le typage explicite pour s'assurer que tous les champs requis sont présents
-      const newCoupon: Coupon = {
-        id: Math.max(0, ...coupons.map((c) => c.id)) + 1,
-        title: values.title,
-        description: values.description,
-        code: values.code,
-        odds: values.odds,
-        expiryDate: values.expiryDate,
-        createdAt: new Date().toISOString().split("T")[0],
-      };
-      setCoupons([newCoupon, ...coupons]);
-      toast({
-        title: "Coupon ajouté !",
-        description: "Le nouveau coupon a été créé avec succès.",
-      });
-    }
-    setDialogOpen(false);
-    setEditingCoupon(null);
-    form.reset();
+    mutation.mutate(values);
   };
 
   const handleAddNew = () => {
@@ -195,71 +229,81 @@ const Coupons = () => {
                 </Button>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {coupons.map((coupon) => (
-                  <Card key={coupon.id} className="overflow-hidden">
-                    <CardHeader className="pb-2">
-                      <CardTitle>{coupon.title}</CardTitle>
-                      <CardDescription className="flex items-center gap-2">
-                        <span>Cote: {coupon.odds}</span>
-                        <span>•</span>
-                        <span>Expire: {coupon.expiryDate}</span>
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm">{coupon.description}</p>
-                      <div className="mt-3 flex items-center gap-2 rounded-md bg-muted p-2">
-                        <code className="text-xs font-semibold">{coupon.code}</code>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="ml-auto h-6 w-6"
-                          onClick={() => handleCopyCoupon(coupon.code)}
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="border-t bg-muted/50 px-6 py-3">
-                      <div className="flex items-center justify-between w-full text-xs text-muted-foreground">
-                        <span>Créé le {coupon.createdAt}</span>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => handleEditCoupon(coupon)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive"
-                            onClick={() => handleDeleteCoupon(coupon.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-
-              {coupons.length === 0 && (
-                <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
-                  <div className="rounded-full bg-primary/10 p-4 text-primary">
-                    <Plus className="h-6 w-6" />
-                  </div>
-                  <h3 className="mt-4 text-lg font-semibold">Aucun coupon</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Vous n'avez pas encore créé de coupon. Ajoutez-en un maintenant.
-                  </p>
-                  <Button onClick={handleAddNew} className="mt-4">
-                    <Plus className="mr-2 h-4 w-4" /> Ajouter un coupon
-                  </Button>
+              {isLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="ml-2">Chargement des coupons...</span>
                 </div>
+              ) : (
+                <>
+                  {coupons.length > 0 ? (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      {coupons.map((coupon) => (
+                        <Card key={coupon.id} className="overflow-hidden">
+                          <CardHeader className="pb-2">
+                            <CardTitle>{coupon.title}</CardTitle>
+                            <CardDescription className="flex items-center gap-2">
+                              <span>Cote: {coupon.odds}</span>
+                              <span>•</span>
+                              <span>Expire: {new Date(coupon.expiry_date).toLocaleDateString()}</span>
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-sm">{coupon.description}</p>
+                            <div className="mt-3 flex items-center gap-2 rounded-md bg-muted p-2">
+                              <code className="text-xs font-semibold">{coupon.code}</code>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="ml-auto h-6 w-6"
+                                onClick={() => handleCopyCoupon(coupon.code)}
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                          <CardFooter className="border-t bg-muted/50 px-6 py-3">
+                            <div className="flex items-center justify-between w-full text-xs text-muted-foreground">
+                              <span>Créé le {new Date(coupon.created_at).toLocaleDateString()}</span>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => handleEditCoupon(coupon)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-destructive"
+                                  onClick={() => handleDeleteCoupon(coupon.id)}
+                                  disabled={deleteMutation.isPending}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardFooter>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
+                      <div className="rounded-full bg-primary/10 p-4 text-primary">
+                        <Plus className="h-6 w-6" />
+                      </div>
+                      <h3 className="mt-4 text-lg font-semibold">Aucun coupon</h3>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Vous n'avez pas encore créé de coupon. Ajoutez-en un maintenant.
+                      </p>
+                      <Button onClick={handleAddNew} className="mt-4">
+                        <Plus className="mr-2 h-4 w-4" /> Ajouter un coupon
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </main>
@@ -356,9 +400,21 @@ const Coupons = () => {
               />
 
               <DialogFooter>
-                <Button type="submit">
-                  <Check className="mr-2 h-4 w-4" />
-                  {editingCoupon ? "Enregistrer les modifications" : "Ajouter le coupon"}
+                <Button 
+                  type="submit" 
+                  disabled={mutation.isPending}
+                >
+                  {mutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Enregistrement...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="mr-2 h-4 w-4" />
+                      {editingCoupon ? "Enregistrer les modifications" : "Ajouter le coupon"}
+                    </>
+                  )}
                 </Button>
               </DialogFooter>
             </form>

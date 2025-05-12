@@ -9,7 +9,93 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      coupons: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          expiry_date: string
+          id: string
+          odds: string
+          title: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          expiry_date: string
+          id?: string
+          odds: string
+          title: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          expiry_date?: string
+          id?: string
+          odds?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      problems: {
+        Row: {
+          category: string
+          id: string
+          problem: string
+          solution: string
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          id?: string
+          problem: string
+          solution: string
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          id?: string
+          problem?: string
+          solution?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      procedures: {
+        Row: {
+          category: string
+          description: string
+          id: string
+          steps: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          description: string
+          id?: string
+          steps: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          description?: string
+          id?: string
+          steps?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
