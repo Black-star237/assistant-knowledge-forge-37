@@ -9,90 +9,176 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      coupons: {
+      Coupons: {
         Row: {
-          code: string
+          code_du_coupon: string | null
+          commentaire: string | null
           created_at: string
-          description: string
-          expiry_date: string
-          id: string
-          odds: string
-          title: string
+          "description visuelle": string | null
+          Heure: string | null
+          id: number
+          image_url: string | null
+          jour: string | null
+          user_id: string | null
         }
         Insert: {
-          code: string
+          code_du_coupon?: string | null
+          commentaire?: string | null
           created_at?: string
-          description: string
-          expiry_date: string
-          id?: string
-          odds: string
-          title: string
+          "description visuelle"?: string | null
+          Heure?: string | null
+          id?: number
+          image_url?: string | null
+          jour?: string | null
+          user_id?: string | null
         }
         Update: {
-          code?: string
+          code_du_coupon?: string | null
+          commentaire?: string | null
           created_at?: string
-          description?: string
-          expiry_date?: string
-          id?: string
-          odds?: string
-          title?: string
+          "description visuelle"?: string | null
+          Heure?: string | null
+          id?: number
+          image_url?: string | null
+          jour?: string | null
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "Coupons_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      problems: {
+      "Informations Bot": {
         Row: {
-          category: string
-          id: string
-          problem: string
-          solution: string
-          tags: string[]
-          title: string
-          updated_at: string
+          "codes promo": string | null
+          created_at: string
+          "exemples de discutions": string | null
+          id: number
+          "liens utiles": string | null
+          user_id: string | null
         }
         Insert: {
-          category: string
-          id?: string
-          problem: string
-          solution: string
-          tags?: string[]
-          title: string
-          updated_at?: string
+          "codes promo"?: string | null
+          created_at?: string
+          "exemples de discutions"?: string | null
+          id?: number
+          "liens utiles"?: string | null
+          user_id?: string | null
         }
         Update: {
-          category?: string
-          id?: string
-          problem?: string
-          solution?: string
-          tags?: string[]
-          title?: string
-          updated_at?: string
+          "codes promo"?: string | null
+          created_at?: string
+          "exemples de discutions"?: string | null
+          id?: number
+          "liens utiles"?: string | null
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "Informations Bot_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      procedures: {
+      Procédures: {
         Row: {
-          category: string
-          description: string
-          id: string
-          steps: string
-          title: string
-          updated_at: string
+          created_at: string
+          id: number
+          "Inscription 1xbet": string | null
+          "Inscription Mega pari": string | null
+          "Inscription melbet": string | null
+          user_id: string | null
         }
         Insert: {
-          category: string
-          description: string
-          id?: string
-          steps: string
-          title: string
-          updated_at?: string
+          created_at?: string
+          id?: number
+          "Inscription 1xbet"?: string | null
+          "Inscription Mega pari"?: string | null
+          "Inscription melbet"?: string | null
+          user_id?: string | null
         }
         Update: {
-          category?: string
-          description?: string
+          created_at?: string
+          id?: number
+          "Inscription 1xbet"?: string | null
+          "Inscription Mega pari"?: string | null
+          "Inscription melbet"?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Procédures_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "Quelques problèmes et leurs solutions": {
+        Row: {
+          created_at: string
+          id: number
+          Problèmes: string | null
+          Solutions: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          Problèmes?: string | null
+          Solutions?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          Problèmes?: string | null
+          Solutions?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Quelques problèmes et leurs solutions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          nom: string | null
+          "Numero perso": string | null
+          "Numero whatsapp": string | null
+          valeure: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          nom?: string | null
+          "Numero perso"?: string | null
+          "Numero whatsapp"?: string | null
+          valeure?: string | null
+        }
+        Update: {
+          created_at?: string | null
           id?: string
-          steps?: string
-          title?: string
-          updated_at?: string
+          nom?: string | null
+          "Numero perso"?: string | null
+          "Numero whatsapp"?: string | null
+          valeure?: string | null
         }
         Relationships: []
       }
