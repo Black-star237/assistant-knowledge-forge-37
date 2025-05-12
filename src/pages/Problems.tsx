@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -60,7 +59,7 @@ interface DbProblem {
 
 // Interface pour l'affichage et la manipulation
 interface ProblemDisplay {
-  id: string | number;
+  id: number;
   title: string;
   problem: string;
   solution: string;
@@ -158,7 +157,7 @@ const Problems = () => {
 
   // Delete problem mutation
   const deleteMutation = useMutation({
-    mutationFn: async (id: string | number) => {
+    mutationFn: async (id: number) => {
       const { error } = await supabase
         .from('Quelques problèmes et leurs solutions')
         .delete()
@@ -194,7 +193,7 @@ const Problems = () => {
     },
   });
 
-  const handleDeleteProblem = (id: string | number) => {
+  const handleDeleteProblem = (id: number) => {
     deleteMutation.mutate(id);
   };
 

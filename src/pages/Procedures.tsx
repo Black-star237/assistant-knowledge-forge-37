@@ -52,9 +52,19 @@ const formSchema = z.object({
   category: z.string().min(1, "La catégorie est requise"),
 });
 
-// Définir le type de procédure pour assurer la cohérence
+// Interface pour les données brutes de la base de données
+interface DbProcedure {
+  id: number;
+  created_at: string;
+  user_id: string | null;
+  "Inscription 1xbet": string | null;
+  "Inscription Mega pari": string | null;
+  "Inscription melbet": string | null;
+}
+
+// Définir le type de procédure pour l'affichage
 interface Procedure {
-  id: string;
+  id: number;
   title: string;
   description: string;
   steps: string;
@@ -69,31 +79,52 @@ const Procedures = () => {
   const [editingProcedure, setEditingProcedure] = useState<Procedure | null>(null);
 
   // Fetch procedures with React Query
-  const { data: procedures = [], isLoading } = useQuery({
+  const { data: proceduresData = [], isLoading } = useQuery({
     queryKey: ['procedures'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('procedures')
+        .from('Procédures')
         .select('*')
-        .order('updated_at', { ascending: false });
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Procedure[];
+      return data as DbProcedure[];
     }
+  });
+
+  // Convert DB data to display format
+  const procedures: Procedure[] = proceduresData.map((item) => {
+    // Prenons le premier champ non-null des colonnes Inscription*
+    let procedureContent = item["Inscription 1xbet"] || item["Inscription Mega pari"] || item["Inscription melbet"] || "";
+    let title = "Procédure " + (item["Inscription 1xbet"] ? "1xbet" : item["Inscription Mega pari"] ? "Mega pari" : "melbet");
+    let category = "Inscription";
+    
+    return {
+      id: item.id,
+      title: title,
+      description: "Guide d'inscription étape par étape",
+      steps: procedureContent,
+      category: category,
+      updated_at: item.created_at
+    };
   });
 
   // Add or update procedure mutation
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
+      // Déterminons la colonne à mettre à jour selon la catégorie/titre
+      let updateColumn = "Inscription 1xbet"; // Par défaut
+      if (values.title.toLowerCase().includes("mega")) {
+        updateColumn = "Inscription Mega pari";
+      } else if (values.title.toLowerCase().includes("melbet")) {
+        updateColumn = "Inscription melbet";
+      }
+      
       if (editingProcedure) {
         const { error } = await supabase
-          .from('procedures')
+          .from('Procédures')
           .update({
-            title: values.title,
-            description: values.description,
-            steps: values.steps,
-            category: values.category,
-            updated_at: new Date().toISOString(),
+            [updateColumn]: values.steps
           })
           .eq('id', editingProcedure.id);
           
@@ -101,12 +132,9 @@ const Procedures = () => {
         return { action: 'update', values };
       } else {
         const { error } = await supabase
-          .from('procedures')
+          .from('Procédures')
           .insert({
-            title: values.title,
-            description: values.description,
-            steps: values.steps,
-            category: values.category,
+            [updateColumn]: values.steps
           });
           
         if (error) throw error;
@@ -136,9 +164,9 @@ const Procedures = () => {
 
   // Delete procedure mutation
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (id: number) => {
       const { error } = await supabase
-        .from('procedures')
+        .from('Procédures')
         .delete()
         .eq('id', id);
         
@@ -171,7 +199,7 @@ const Procedures = () => {
     },
   });
 
-  const handleDeleteProcedure = (id: string) => {
+  const handleDeleteProcedure = (id: number) => {
     deleteMutation.mutate(id);
   };
 
@@ -333,7 +361,7 @@ const Procedures = () => {
                   <FormItem>
                     <FormLabel>Titre</FormLabel>
                     <FormControl>
-                      <Input placeholder="ex: Comment créer un compte" {...field} />
+                      <Input placeholder="ex: Inscription 1xbet" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -47,8 +46,8 @@ const formSchema = z.object({
   expiryDate: z.string().min(1, "La date d'expiration est requise"),
 });
 
-// Définir le type de coupon pour assurer la cohérence
-interface Coupon {
+// Définition du type selon la structure réelle de la table Supabase
+interface DbCoupon {
   id: number;
   code_du_coupon: string | null;
   commentaire: string | null;
@@ -62,7 +61,7 @@ interface Coupon {
 
 // Interface pour mapper les données de Supabase vers notre format d'affichage
 interface CouponDisplay {
-  id: string | number;
+  id: number;
   title: string;
   description: string;
   code: string;
@@ -87,7 +86,7 @@ const Coupons = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Coupon[];
+      return data as DbCoupon[];
     }
   });
 
@@ -155,7 +154,7 @@ const Coupons = () => {
 
   // Delete coupon mutation
   const deleteMutation = useMutation({
-    mutationFn: async (id: string | number) => {
+    mutationFn: async (id: number) => {
       const { error } = await supabase
         .from('Coupons')
         .delete()
@@ -199,7 +198,7 @@ const Coupons = () => {
     });
   };
 
-  const handleDeleteCoupon = (id: string | number) => {
+  const handleDeleteCoupon = (id: number) => {
     deleteMutation.mutate(id);
   };
 
