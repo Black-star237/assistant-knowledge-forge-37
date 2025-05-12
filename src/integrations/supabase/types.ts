@@ -19,6 +19,7 @@ export type Database = {
           id: number
           image_url: string | null
           jour: string | null
+          odds: string | null
           user_id: string | null
         }
         Insert: {
@@ -30,6 +31,7 @@ export type Database = {
           id?: number
           image_url?: string | null
           jour?: string | null
+          odds?: string | null
           user_id?: string | null
         }
         Update: {
@@ -41,6 +43,7 @@ export type Database = {
           id?: number
           image_url?: string | null
           jour?: string | null
+          odds?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -125,24 +128,30 @@ export type Database = {
       }
       "Quelques problèmes et leurs solutions": {
         Row: {
+          category: string | null
           created_at: string
           id: number
           Problèmes: string | null
           Solutions: string | null
+          tags: string | null
           user_id: string | null
         }
         Insert: {
+          category?: string | null
           created_at?: string
           id?: number
           Problèmes?: string | null
           Solutions?: string | null
+          tags?: string | null
           user_id?: string | null
         }
         Update: {
+          category?: string | null
           created_at?: string
           id?: number
           Problèmes?: string | null
           Solutions?: string | null
+          tags?: string | null
           user_id?: string | null
         }
         Relationships: [

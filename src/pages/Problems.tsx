@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -55,6 +56,8 @@ interface DbProblem {
   Solutions: string | null;
   user_id: string | null;
   created_at: string;
+  category: string | null;
+  tags: string | null;
 }
 
 // Interface pour l'affichage et la manipulation
@@ -102,8 +105,8 @@ const Problems = () => {
       title: title,
       problem: item.Problèmes || "",
       solution: item.Solutions || "",
-      tags: [],  // Pas de tags dans la structure actuelle
-      category: "Général", // Catégorie par défaut
+      tags: item.tags ? item.tags.split(',').map(tag => tag.trim()) : [],  // Utiliser la colonne tags si elle existe
+      category: item.category || "Général", // Utiliser la colonne category si elle existe
       updated_at: item.created_at
     };
   });
@@ -117,6 +120,8 @@ const Problems = () => {
           .update({
             Problèmes: values.problem,
             Solutions: values.solution,
+            category: values.category,
+            tags: values.tags
           })
           .eq('id', editingProblem.id);
           
@@ -128,6 +133,8 @@ const Problems = () => {
           .insert({
             Problèmes: values.problem,
             Solutions: values.solution,
+            category: values.category,
+            tags: values.tags
           });
           
         if (error) throw error;

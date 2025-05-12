@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -57,6 +58,7 @@ interface DbCoupon {
   Heure: string | null;
   created_at: string;
   user_id: string | null;
+  odds: string | null;
 }
 
 // Interface pour mapper les données de Supabase vers notre format d'affichage
@@ -96,7 +98,7 @@ const Coupons = () => {
     title: coupon.commentaire || "Sans titre",
     description: coupon["description visuelle"] || "Pas de description",
     code: coupon.code_du_coupon || "",
-    odds: "1.00", // Valeur par défaut car ce champ n'existe pas dans votre table
+    odds: coupon.odds || "1.00", // Maintenant utilisons la colonne odds qui existe dans la base de données
     expiry_date: coupon.jour || new Date().toISOString().split('T')[0],
     created_at: coupon.created_at
   }));
@@ -112,6 +114,7 @@ const Coupons = () => {
             "description visuelle": values.description,
             code_du_coupon: values.code,
             jour: values.expiryDate,
+            odds: values.odds
           })
           .eq('id', editingCoupon.id);
           
@@ -125,6 +128,7 @@ const Coupons = () => {
             "description visuelle": values.description,
             code_du_coupon: values.code,
             jour: values.expiryDate,
+            odds: values.odds
           });
           
         if (error) throw error;
