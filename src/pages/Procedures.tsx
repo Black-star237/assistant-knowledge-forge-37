@@ -83,7 +83,7 @@ const Procedures = () => {
     queryKey: ['procedures'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('Procédures')
+        .from('procédures')
         .select('*')
         .order('created_at', { ascending: false });
       
@@ -122,7 +122,7 @@ const Procedures = () => {
       
       if (editingProcedure) {
         const { error } = await supabase
-          .from('Procédures')
+          .from('procédures')
           .update({
             [updateColumn]: values.steps
           })
@@ -132,7 +132,7 @@ const Procedures = () => {
         return { action: 'update', values };
       } else {
         const { error } = await supabase
-          .from('Procédures')
+          .from('procédures')
           .insert({
             [updateColumn]: values.steps
           });
@@ -166,7 +166,7 @@ const Procedures = () => {
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       const { error } = await supabase
-        .from('Procédures')
+        .from('procédures')
         .delete()
         .eq('id', id);
         
