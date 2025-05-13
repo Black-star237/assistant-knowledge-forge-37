@@ -1,65 +1,65 @@
 
-import React from "react";
 import { Button } from "@/components/ui/button";
-import { Bell, User, Settings } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/context/AuthContext";
+import { useState } from "react";
+import { Bell, Menu, Search, Settings, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useSidebar } from "@/components/ui/sidebar";
 
 export function Header() {
-  return (
-    <header className="sticky top-0 z-30 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-16 items-center px-4 sm:px-6">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-assistant flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">AW</span>
-            </div>
-            <h1 className="text-lg font-semibold">
-              Assistant WhatsApp
-              <span className="text-xs font-normal ml-2 text-muted-foreground">v1.0</span>
-            </h1>
-          </div>
-        </div>
+  const { toggleSidebar } = useSidebar();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
-        <div className="ml-auto flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1.5 h-2 w-2 rounded-full bg-assistant" />
+  return (
+    <header className="sticky top-0 z-10 border-b bg-background">
+      <div className="flex h-16 items-center px-4 lg:px-6">
+        <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleSidebar}>
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle menu</span>
+        </Button>
+        
+        <div className="ml-auto flex items-center space-x-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground"
+            onClick={() => setIsSearchOpen(!isSearchOpen)}
+          >
+            <Search className="h-5 w-5" />
+            <span className="sr-only">Search</span>
           </Button>
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="relative h-9 w-9 rounded-full"
-                size="icon"
-              >
-                <User className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Mon Compte</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <User className="mr-2 h-4 w-4" />
-                <span>Profil</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Paramètres</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
-                Se déconnecter
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button variant="ghost" size="icon" className="text-muted-foreground">
+            <Bell className="h-5 w-5" />
+            <span className="sr-only">Notifications</span>
+          </Button>
+          
+          <Button variant="ghost" size="icon" className="text-muted-foreground">
+            <Settings className="h-5 w-5" />
+            <span className="sr-only">Settings</span>
+          </Button>
+
+          {user ? (
+            <Button 
+              variant="outline" 
+              onClick={() => signOut()}
+              className="flex items-center gap-2"
+            >
+              <User className="h-4 w-4" />
+              Déconnexion
+            </Button>
+          ) : (
+            <Button 
+              variant="primary" 
+              onClick={() => navigate("/auth")}
+              className="flex items-center gap-2"
+            >
+              <User className="h-4 w-4" />
+              Connexion
+            </Button>
+          )}
         </div>
       </div>
     </header>
