@@ -38,6 +38,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 const formSchema = z.object({
   title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
@@ -45,6 +46,8 @@ const formSchema = z.object({
   code: z.string().min(3, "Le code doit contenir au moins 3 caractères"),
   odds: z.string().min(1, "La cote est requise"),
   expiryDate: z.string().min(1, "La date d'expiration est requise"),
+  expiryTime: z.string().optional(),
+  image: z.instanceof(File).optional(),
 });
 
 // Définition du type selon la structure réelle de la table Supabase
@@ -69,6 +72,8 @@ interface CouponDisplay {
   code: string;
   odds: string;
   expiry_date: string;
+  expiry_time: string;
+  image_url: string | null;
   created_at: string;
 }
 
@@ -77,13 +82,15 @@ const Coupons = () => {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<CouponDisplay | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Fetch coupons with React Query
   const { data: couponsData = [], isLoading } = useQuery({
     queryKey: ['coupons'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('Coupons')
+        .from('coupons')
         .select('*')
         .order('created_at', { ascending: false });
       
@@ -98,23 +105,58 @@ const Coupons = () => {
     title: coupon.commentaire || "Sans titre",
     description: coupon["description visuelle"] || "Pas de description",
     code: coupon.code_du_coupon || "",
-    odds: coupon.odds || "1.00", // Maintenant utilisons la colonne odds qui existe dans la base de données
+    odds: coupon.odds || "1.00",
     expiry_date: coupon.jour || new Date().toISOString().split('T')[0],
+    expiry_time: coupon.Heure || "",
+    image_url: coupon.image_url,
     created_at: coupon.created_at
   }));
+
+  // Upload image to Supabase Storage
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `coupon-images/${fileName}`;
+      
+      const { data, error } = await supabase.storage
+        .from('public')
+        .upload(filePath, file);
+      
+      if (error) throw error;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('public')
+        .getPublicUrl(filePath);
+      
+      return publicUrl;
+    } catch (error: any) {
+      console.error('Erreur lors du téléchargement de l\'image:', error.message);
+      return null;
+    }
+  };
 
   // Add or update coupon mutation
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
+      let imageUrl = null;
+      
+      // Upload image if provided
+      if (selectedImage) {
+        imageUrl = await uploadImage(selectedImage);
+      }
+      
       if (editingCoupon) {
         const { error } = await supabase
-          .from('Coupons')
+          .from('coupons')
           .update({
             commentaire: values.title,
             "description visuelle": values.description,
             code_du_coupon: values.code,
             jour: values.expiryDate,
-            odds: values.odds
+            Heure: values.expiryTime || null,
+            odds: values.odds,
+            ...(imageUrl && { image_url: imageUrl })
           })
           .eq('id', editingCoupon.id);
           
@@ -122,13 +164,15 @@ const Coupons = () => {
         return { action: 'update', values };
       } else {
         const { error } = await supabase
-          .from('Coupons')
+          .from('coupons')
           .insert({
             commentaire: values.title,
             "description visuelle": values.description,
             code_du_coupon: values.code,
             jour: values.expiryDate,
-            odds: values.odds
+            Heure: values.expiryTime || null,
+            odds: values.odds,
+            image_url: imageUrl
           });
           
         if (error) throw error;
@@ -145,6 +189,8 @@ const Coupons = () => {
       });
       setDialogOpen(false);
       setEditingCoupon(null);
+      setSelectedImage(null);
+      setImagePreview(null);
       form.reset();
     },
     onError: (error) => {
@@ -160,7 +206,7 @@ const Coupons = () => {
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       const { error } = await supabase
-        .from('Coupons')
+        .from('coupons')
         .delete()
         .eq('id', id);
         
@@ -191,8 +237,24 @@ const Coupons = () => {
       code: "",
       odds: "",
       expiryDate: "",
+      expiryTime: "",
     },
   });
+
+  // Handle image selection
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      setSelectedImage(selectedFile);
+      
+      // Create a preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(selectedFile);
+    }
+  };
 
   const handleCopyCoupon = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -208,12 +270,14 @@ const Coupons = () => {
 
   const handleEditCoupon = (coupon: CouponDisplay) => {
     setEditingCoupon(coupon);
+    setImagePreview(coupon.image_url);
     form.reset({
       title: coupon.title,
       description: coupon.description,
       code: coupon.code,
       odds: coupon.odds,
-      expiryDate: coupon.expiry_date.split('T')[0],
+      expiryDate: coupon.expiry_date,
+      expiryTime: coupon.expiry_time || undefined,
     });
     setDialogOpen(true);
   };
@@ -224,12 +288,15 @@ const Coupons = () => {
 
   const handleAddNew = () => {
     setEditingCoupon(null);
+    setSelectedImage(null);
+    setImagePreview(null);
     form.reset({
       title: "",
       description: "",
       code: "",
       odds: "",
       expiryDate: new Date().toISOString().split("T")[0],
+      expiryTime: "",
     });
     setDialogOpen(true);
   };
@@ -265,12 +332,27 @@ const Coupons = () => {
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                       {coupons.map((coupon) => (
                         <Card key={coupon.id} className="overflow-hidden">
+                          {coupon.image_url && (
+                            <AspectRatio ratio={16 / 9} className="bg-muted">
+                              <img 
+                                src={coupon.image_url} 
+                                alt={coupon.title} 
+                                className="object-cover w-full h-full" 
+                              />
+                            </AspectRatio>
+                          )}
                           <CardHeader className="pb-2">
                             <CardTitle>{coupon.title}</CardTitle>
                             <CardDescription className="flex items-center gap-2">
                               <span>Cote: {coupon.odds}</span>
                               <span>•</span>
                               <span>Expire: {new Date(coupon.expiry_date).toLocaleDateString()}</span>
+                              {coupon.expiry_time && (
+                                <>
+                                  <span>•</span>
+                                  <span>à {coupon.expiry_time}</span>
+                                </>
+                              )}
                             </CardDescription>
                           </CardHeader>
                           <CardContent>
@@ -380,6 +462,33 @@ const Coupons = () => {
                 )}
               />
 
+              {/* Image upload */}
+              <FormItem>
+                <FormLabel>Image</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="cursor-pointer"
+                  />
+                </FormControl>
+                <FormDescription>
+                  Choisissez une image pour votre coupon (facultatif)
+                </FormDescription>
+                {imagePreview && (
+                  <div className="mt-2 rounded-md overflow-hidden border">
+                    <AspectRatio ratio={16 / 9}>
+                      <img 
+                        src={imagePreview} 
+                        alt="Aperçu de l'image" 
+                        className="object-cover w-full h-full" 
+                      />
+                    </AspectRatio>
+                  </div>
+                )}
+              </FormItem>
+
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -410,19 +519,35 @@ const Coupons = () => {
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="expiryDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date d'expiration</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="expiryDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date d'expiration</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="expiryTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Heure d'expiration</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <DialogFooter>
                 <Button 

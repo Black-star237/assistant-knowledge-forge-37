@@ -52,7 +52,7 @@ export function Header() {
             </Button>
           ) : (
             <Button 
-              variant="primary" 
+              variant="default" 
               onClick={() => navigate("/auth")}
               className="flex items-center gap-2"
             >

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -84,7 +83,7 @@ const Problems = () => {
     queryKey: ['problems'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('Quelques problèmes et leurs solutions')
+        .from('problèmes_et_solutions')
         .select('*')
         .order('created_at', { ascending: false });
       
@@ -116,7 +115,7 @@ const Problems = () => {
     mutationFn: async (values: z.infer<typeof formSchema>) => {
       if (editingProblem) {
         const { error } = await supabase
-          .from('Quelques problèmes et leurs solutions')
+          .from('problèmes_et_solutions')
           .update({
             Problèmes: values.problem,
             Solutions: values.solution,
@@ -129,7 +128,7 @@ const Problems = () => {
         return { action: 'update', values };
       } else {
         const { error } = await supabase
-          .from('Quelques problèmes et leurs solutions')
+          .from('problèmes_et_solutions')
           .insert({
             Problèmes: values.problem,
             Solutions: values.solution,
@@ -166,7 +165,7 @@ const Problems = () => {
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       const { error } = await supabase
-        .from('Quelques problèmes et leurs solutions')
+        .from('problèmes_et_solutions')
         .delete()
         .eq('id', id);
         
