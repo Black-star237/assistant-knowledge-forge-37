@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -60,7 +59,7 @@ interface DbCoupon {
   jour: string | null;
   Heure: string | null;
   created_at: string;
-  user_id: string | null;
+  user_id: string | null; // Important: user_id est de type UUID dans la DB, mais string ici
   odds: string | null;
 }
 
@@ -75,6 +74,12 @@ interface CouponDisplay {
   expiry_time: string;
   image_url: string | null;
   created_at: string;
+  user_id: string | null; // Ajout de user_id ici aussi
+}
+
+// Type pour les valeurs du formulaire avec userId
+interface FormValuesWithUserId extends z.infer<typeof formSchema> {
+  userId: string;
 }
 
 const Coupons = () => {
@@ -89,6 +94,20 @@ const Coupons = () => {
   const { data: couponsData = [], isLoading } = useQuery({
     queryKey: ['coupons'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        // L'utilisateur n'est pas connecté, ne rien retourner ou gérer l'erreur
+        // Les politiques RLS empêcheront la requête si l'utilisateur n'est pas authentifié
+        // Ou si aucune politique SELECT n'est définie pour les utilisateurs non authentifiés.
+        // Dans notre cas, avec la politique "Users_can_view_their_own_coupons",
+        // la requête retournera uniquement les coupons de l'utilisateur connecté.
+        // Si aucun utilisateur n'est connecté, elle devrait retourner une table vide ou une erreur
+        // en fonction de la configuration RLS stricte.
+        // Pour être sûr, on peut vérifier `user` ici.
+        console.log("Aucun utilisateur connecté, ne peut pas charger les coupons spécifiques à l'utilisateur.");
+        // throw new Error("Utilisateur non authentifié"); // Optionnel: lancer une erreur si nécessaire
+      }
+
       const { data, error } = await supabase
         .from('coupons')
         .select('*')
@@ -109,7 +128,8 @@ const Coupons = () => {
     expiry_date: coupon.jour || new Date().toISOString().split('T')[0],
     expiry_time: coupon.Heure || "",
     image_url: coupon.image_url,
-    created_at: coupon.created_at
+    created_at: coupon.created_at,
+    user_id: coupon.user_id
   }));
 
   // Upload image to Supabase Storage
@@ -117,33 +137,50 @@ const Coupons = () => {
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `coupon-images/${fileName}`;
+      // S'assurer que le chemin correspond à la politique RLS (coupon-images/)
+      const filePath = `coupon-images/${fileName}`; 
       
       const { data, error } = await supabase.storage
-        .from('public')
+        .from('public') // Nom du bucket
         .upload(filePath, file);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur Supabase Storage upload:', error);
+        throw error;
+      }
       
       const { data: { publicUrl } } = supabase.storage
-        .from('public')
+        .from('public') // Nom du bucket
         .getPublicUrl(filePath);
       
       return publicUrl;
     } catch (error: any) {
       console.error('Erreur lors du téléchargement de l\'image:', error.message);
+      toast({
+        title: "Erreur de téléchargement d'image",
+        description: error.message,
+        variant: "destructive",
+      });
       return null;
     }
   };
 
   // Add or update coupon mutation
   const mutation = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
-      let imageUrl = null;
+    mutationFn: async (values: FormValuesWithUserId) => { // Accepte FormValuesWithUserId
+      let imageUrl = editingCoupon?.image_url || null; // Conserve l'ancienne image par défaut
       
-      // Upload image if provided
-      if (selectedImage) {
-        imageUrl = await uploadImage(selectedImage);
+      if (selectedImage) { // Si une nouvelle image est sélectionnée
+        const uploadedUrl = await uploadImage(selectedImage);
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        } else if (!editingCoupon?.image_url) { 
+          // Si le téléchargement échoue et qu'il n'y avait pas d'image avant (pour un nouveau coupon)
+          // Ou si l'utilisateur veut explicitement supprimer l'image et que le téléchargement échoue
+          // Peut-être ne pas définir imageUrl sur null ici, dépend du comportement souhaité.
+          // Si le téléchargement échoue, on pourrait vouloir conserver l'ancienne image si c'est une édition.
+          // Pour la création, si le téléchargement échoue, imageUrl restera null.
+        }
       }
       
       if (editingCoupon) {
@@ -156,13 +193,15 @@ const Coupons = () => {
             jour: values.expiryDate,
             Heure: values.expiryTime || null,
             odds: values.odds,
-            ...(imageUrl && { image_url: imageUrl })
+            image_url: imageUrl, // Utilise la nouvelle ou l'ancienne URL
+            // user_id n'est pas mis à jour, car il est défini par la politique RLS à la création
           })
           .eq('id', editingCoupon.id);
           
         if (error) throw error;
         return { action: 'update', values };
       } else {
+        // C'est ici que user_id est crucial
         const { error } = await supabase
           .from('coupons')
           .insert({
@@ -172,7 +211,8 @@ const Coupons = () => {
             jour: values.expiryDate,
             Heure: values.expiryTime || null,
             odds: values.odds,
-            image_url: imageUrl
+            image_url: imageUrl,
+            user_id: values.userId, // Ajout de user_id
           });
           
         if (error) throw error;
@@ -247,12 +287,18 @@ const Coupons = () => {
       const selectedFile = e.target.files[0];
       setSelectedImage(selectedFile);
       
-      // Create a preview
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
+      reader.onload = (eventReader) => { // Renommé 'e' en 'eventReader' pour éviter conflit de portée
+        setImagePreview(eventReader.target?.result as string);
       };
       reader.readAsDataURL(selectedFile);
+    } else {
+      setSelectedImage(null);
+      // Si aucune image n'est sélectionnée (par exemple, l'utilisateur efface le champ),
+      // et que nous sommes en mode édition, nous pourrions vouloir remettre l'aperçu de l'image existante.
+      // Ou le laisser vide pour indiquer que l'image sera supprimée si l'utilisateur enregistre.
+      // Pour l'instant, on efface l'aperçu.
+      setImagePreview(null);
     }
   };
 
@@ -282,8 +328,21 @@ const Coupons = () => {
     setDialogOpen(true);
   };
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    mutation.mutate(values);
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      toast({
+        title: "Erreur d'authentification",
+        description: "Vous devez être connecté pour ajouter ou modifier un coupon.",
+        variant: "destructive",
+      });
+      // Idéalement, rediriger vers la page de connexion ou afficher un modal de connexion
+      // Pour l'instant, on empêche la soumission.
+      return;
+    }
+
+    mutation.mutate({ ...values, userId: user.id });
   };
 
   const handleAddNew = () => {
@@ -295,8 +354,9 @@ const Coupons = () => {
       description: "",
       code: "",
       odds: "",
-      expiryDate: new Date().toISOString().split("T")[0],
+      expiryDate: new Date().toISOString().split("T")[0], // Assurer que c'est toujours la date actuelle
       expiryTime: "",
+      // image: undefined, // React Hook Form gère cela via le File input
     });
     setDialogOpen(true);
   };
@@ -343,7 +403,7 @@ const Coupons = () => {
                           )}
                           <CardHeader className="pb-2">
                             <CardTitle>{coupon.title}</CardTitle>
-                            <CardDescription className="flex items-center gap-2">
+                            <CardDescription className="flex items-center gap-2 flex-wrap">
                               <span>Cote: {coupon.odds}</span>
                               <span>•</span>
                               <span>Expire: {new Date(coupon.expiry_date).toLocaleDateString()}</span>
@@ -356,7 +416,7 @@ const Coupons = () => {
                             </CardDescription>
                           </CardHeader>
                           <CardContent>
-                            <p className="text-sm">{coupon.description}</p>
+                            <p className="text-sm break-words">{coupon.description}</p>
                             <div className="mt-3 flex items-center gap-2 rounded-md bg-muted p-2">
                               <code className="text-xs font-semibold">{coupon.code}</code>
                               <Button
@@ -386,9 +446,9 @@ const Coupons = () => {
                                   size="icon"
                                   className="h-7 w-7 text-destructive"
                                   onClick={() => handleDeleteCoupon(coupon.id)}
-                                  disabled={deleteMutation.isPending}
+                                  disabled={deleteMutation.isPending && deleteMutation.variables === coupon.id}
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  {deleteMutation.isPending && deleteMutation.variables === coupon.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                                 </Button>
                               </div>
                             </div>
@@ -417,7 +477,15 @@ const Coupons = () => {
         </div>
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        setDialogOpen(open);
+        if (!open) {
+          setEditingCoupon(null);
+          setSelectedImage(null);
+          setImagePreview(null);
+          form.reset();
+        }
+      }}>
         <DialogContent className="sm:max-w-[525px]">
           <DialogHeader>
             <DialogTitle>
@@ -469,6 +537,7 @@ const Coupons = () => {
                   <Input 
                     type="file" 
                     accept="image/*"
+                    // Important: ne pas utiliser form.register ici si on gère le fichier via selectedImage
                     onChange={handleImageChange}
                     className="cursor-pointer"
                   />
