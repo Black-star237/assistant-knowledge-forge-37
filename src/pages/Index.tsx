@@ -4,18 +4,21 @@ import { StatsOverview } from "@/components/dashboard/StatsOverview";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { FileText, Bookmark, HelpCircle, Info, ArrowRight, MessageSquare, Loader2 } from "lucide-react";
+import { FileText, Bookmark, HelpCircle, Info, MessageSquare, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, Database } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+
+// Define a type for valid table names we are querying
+type ValidTableName = Extract<keyof Database['public']['Tables'], 'coupons' | 'procédures' | 'problèmes_et_solutions' | 'informations_bot'>;
 
 interface StatSummary {
   count: number;
   latestCreatedAt: string | null;
 }
 
-const fetchStatSummary = async (tableName: string): Promise<StatSummary> => {
+const fetchStatSummary = async (tableName: ValidTableName): Promise<StatSummary> => {
   const { count, error: countError } = await supabase
     .from(tableName)
     .select('*', { count: 'exact', head: true });
@@ -27,10 +30,10 @@ const fetchStatSummary = async (tableName: string): Promise<StatSummary> => {
 
   const { data: latestEntry, error: latestEntryError } = await supabase
     .from(tableName)
-    .select('created_at')
+    .select('created_at') // We are only selecting 'created_at'
     .order('created_at', { ascending: false })
     .limit(1)
-    .maybeSingle(); // Use maybeSingle to avoid error if table is empty
+    .maybeSingle<{ created_at: string }>(); // Explicitly type the expected shape of selected data
 
   if (latestEntryError) {
     console.error(`Error fetching latest entry for ${tableName}:`, latestEntryError);
@@ -65,9 +68,10 @@ const Index = () => {
   const { data: dashboardData, isLoading: isLoadingDashboardData } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: async () => {
+      // Ensure table names match ValidTableName types
       const [coupons, procedures, problems, botInfo] = await Promise.all([
         fetchStatSummary('coupons'),
-        fetchStatSummary('procédures'), // Note: Supabase table names are exact
+        fetchStatSummary('procédures'), 
         fetchStatSummary('problèmes_et_solutions'),
         fetchStatSummary('informations_bot'),
       ]);
