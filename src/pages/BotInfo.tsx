@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -11,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-// ... Accordion imports are not used, can be removed later if confirmed
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,7 +22,6 @@ import {
 import {
   Form,
   FormControl,
-  // FormDescription, // Not used currently
   FormField,
   FormItem,
   FormLabel,
@@ -38,12 +35,12 @@ import {
   Trash2, 
   Check, 
   Info, 
-  Link as LinkIconLucide, // Renamed to avoid conflict with Link component from react-router-dom
+  Link as LinkIconLucide,
   Tag, 
   MessageSquare,
   Clipboard, 
   ExternalLink,
-  Loader2 // Added for loading states
+  Loader2 
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -59,20 +56,20 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Tables } from "@/integrations/supabase/types";
+import { useQuery, useMutation, useQueryClient, type UseMutationOptions } from "@tanstack/react-query"; // Added UseMutationOptions
+import type { Tables, Database } from "@/integrations/supabase/types"; // Ensure Database is imported
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 // Define the structure for items displayed in the UI
 interface BotInfoDisplayItem {
-  id: number; // Original ID from Supabase table
+  id: number; 
   title: string;
   content: string;
   type: 'promo' | 'link' | 'example' | 'rules';
-  createdAt: string; // Formatted date string
-  dbCreatedAt: string; // Original ISO string from DB for sorting or other logic
-  user_profile?: string | null; // Store user_profile if needed, though ops use auth.user.id
+  createdAt: string; 
+  dbCreatedAt: string; 
+  user_profile?: string | null; 
 }
 
 const formSchema = z.object({
@@ -81,24 +78,34 @@ const formSchema = z.object({
   type: z.enum(["promo", "link", "example", "rules"], {
     required_error: "Le type est requis",
   }),
-  // Category is removed
 });
 
 type FormData = z.infer<typeof formSchema>;
 
 // Helper function to map Supabase rows to BotInfoDisplayItem
 const mapToDisplayItem = (
-  item: any, // Allow 'any' for diverse Supabase table structures before mapping
+  item: Tables<'code_promo'> | Tables<'liens_utiles'> | Tables<'exemples_de_discussions'> | Tables<'regles'>,
   type: BotInfoDisplayItem['type']
 ): BotInfoDisplayItem => {
-  let title = item.titre || '';
-  let content = item.contenu || '';
+  let title = '';
+  let content = '';
 
-  if (type === 'example') {
-    content = item.discussion || '';
+  if ('titre' in item && item.titre) {
+    title = item.titre;
   }
-  if (type === 'link' && !item.titre) { // If titre was null from DB for a link
-    title = item.contenu || 'Lien'; // Default title for link if titre is missing
+
+  if (type === 'example' && 'discussion' in item && item.discussion) {
+    content = item.discussion;
+  } else if ('contenu' in item && item.contenu) {
+    content = item.contenu;
+  }
+  
+  // For links, if title was not set from 'titre' (e.g. older entries before 'titre' column or if it's null)
+  // and we want a fallback, we could use content. But 'liens_utiles' now has 'titre'.
+  if (type === 'link' && !title && 'contenu' in item && item.contenu) {
+     // If 'titre' is null/empty for a link, we might use the URL (content) as title
+     // or leave it, depends on desired behavior. The form now has a 'titre' field for links.
+     title = item.contenu; // Fallback if 'titre' is empty
   }
 
 
@@ -109,7 +116,7 @@ const mapToDisplayItem = (
     type: type,
     createdAt: format(new Date(item.created_at), "d MMMM yyyy", { locale: fr }),
     dbCreatedAt: item.created_at,
-    user_profile: item.user_profile,
+    user_profile: item.user_profile || ( 'user_id' in item ? item.user_id : null ), // Handle user_id if present
   };
 };
 
@@ -120,55 +127,55 @@ const BotInfo = () => {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingInfo, setEditingInfo] = useState<BotInfoDisplayItem | null>(null);
-  const [activeType, setActiveType] = useState<string>("all"); // string to include 'all'
+  const [activeType, setActiveType] = useState<string>("all"); 
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       content: "",
-      type: "promo", // Default type
+      type: "promo", 
     },
   });
 
   const userId = user?.id;
 
   // Fetching functions for each type
-  const fetchPromoCodes = async (userId: string) => {
+  const fetchPromoCodes = async (currentUserId: string) => {
     const { data, error } = await supabase
       .from("code_promo")
       .select("*")
-      .eq("user_profile", userId)
+      .eq("user_profile", currentUserId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data.map(item => mapToDisplayItem(item, 'promo'));
   };
 
-  const fetchLinks = async (userId: string) => {
+  const fetchLinks = async (currentUserId: string) => {
     const { data, error } = await supabase
       .from("liens_utiles")
       .select("*")
-      .eq("user_profile", userId)
+      .eq("user_profile", currentUserId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data.map(item => mapToDisplayItem(item, 'link'));
   };
 
-  const fetchExamples = async (userId: string) => {
+  const fetchExamples = async (currentUserId: string) => {
     const { data, error } = await supabase
       .from("exemples_de_discussions")
       .select("*")
-      .eq("user_profile", userId)
+      .eq("user_profile", currentUserId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data.map(item => mapToDisplayItem(item, 'example'));
   };
 
-  const fetchRules = async (userId: string) => {
+  const fetchRules = async (currentUserId: string) => {
     const { data, error } = await supabase
       .from("regles")
       .select("*")
-      .eq("user_profile", userId)
+      .eq("user_profile", currentUserId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data.map(item => mapToDisplayItem(item, 'rules'));
@@ -207,55 +214,54 @@ const BotInfo = () => {
   }, [promoData, linkData, exampleData, rulesData]);
 
 
-  const addMutation = useMutation(
-    async ({ values, userId }: { values: FormData; userId: string }) => {
+  const addMutation = useMutation<void, Error, { values: FormData; userId: string }>({ // Specify types for useMutation
+    mutationFn: async ({ values, userId: currentUserId }) => {
       let tableName: keyof Database['public']['Tables'] | '' = '';
       let payload: any = {};
 
       switch (values.type) {
         case "promo":
           tableName = "code_promo";
-          payload = { titre: values.title, contenu: values.content, user_profile: userId };
+          payload = { titre: values.title, contenu: values.content, user_profile: currentUserId };
           break;
         case "link":
           tableName = "liens_utiles";
-          payload = { titre: values.title, contenu: values.content, user_profile: userId };
+          // Ensure 'titre' is included in the payload for 'liens_utiles'
+          payload = { titre: values.title, contenu: values.content, user_profile: currentUserId };
           break;
         case "example":
           tableName = "exemples_de_discussions";
-          payload = { titre: values.title, discussion: values.content, user_profile: userId };
+          payload = { titre: values.title, discussion: values.content, user_profile: currentUserId };
           break;
         case "rules":
           tableName = "regles";
-          payload = { titre: values.title, contenu: values.content, user_profile: userId };
+          payload = { titre: values.title, contenu: values.content, user_profile: currentUserId };
           break;
       }
       if (!tableName) throw new Error("Invalid type");
-      const { error } = await supabase.from(tableName).insert(payload);
+      const { error } = await supabase.from(tableName as keyof Database['public']['Tables']).insert(payload); // Cast tableName
       if (error) throw error;
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["promoCodes", userId] });
-        queryClient.invalidateQueries({ queryKey: ["links", userId] });
-        queryClient.invalidateQueries({ queryKey: ["examples", userId] });
-        queryClient.invalidateQueries({ queryKey: ["rules", userId] });
-        toast({ title: "Information ajoutée !", description: "La nouvelle information a été créée avec succès." });
-        setDialogOpen(false);
-        form.reset();
-      },
-      onError: (error: Error) => {
-        toast({ title: "Erreur", description: error.message, variant: "destructive" });
-      },
-    }
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["promoCodes", userId] });
+      queryClient.invalidateQueries({ queryKey: ["links", userId] });
+      queryClient.invalidateQueries({ queryKey: ["examples", userId] });
+      queryClient.invalidateQueries({ queryKey: ["rules", userId] });
+      toast({ title: "Information ajoutée !", description: "La nouvelle information a été créée avec succès." });
+      setDialogOpen(false);
+      form.reset();
+    },
+    onError: (error: Error) => {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    },
+  });
 
-  const editMutation = useMutation(
-    async ({ values, editingInfo, userId }: { values: FormData; editingInfo: BotInfoDisplayItem; userId: string }) => {
+  const editMutation = useMutation<void, Error, { values: FormData; editingInfo: BotInfoDisplayItem; userId: string }>({ // Specify types
+    mutationFn: async ({ values, editingInfo: currentEditingInfo, userId: currentUserId }) => {
       let tableName: keyof Database['public']['Tables'] | '' = '';
       let payload: any = {};
 
-      switch (editingInfo.type) { // Use editingInfo.type for consistency as form type might change
+      switch (currentEditingInfo.type) { 
         case "promo":
           tableName = "code_promo";
           payload = { titre: values.title, contenu: values.content };
@@ -276,31 +282,29 @@ const BotInfo = () => {
       if (!tableName) throw new Error("Invalid type for editing");
 
       const { error } = await supabase
-        .from(tableName)
+        .from(tableName as keyof Database['public']['Tables']) // Cast tableName
         .update(payload)
-        .eq("id", editingInfo.id)
-        .eq("user_profile", userId); // Ensure user owns the record
+        .eq("id", currentEditingInfo.id)
+        .eq("user_profile", currentUserId); 
       if (error) throw error;
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["promoCodes", userId] });
-        queryClient.invalidateQueries({ queryKey: ["links", userId] });
-        queryClient.invalidateQueries({ queryKey: ["examples", userId] });
-        queryClient.invalidateQueries({ queryKey: ["rules", userId] });
-        toast({ title: "Information modifiée !", description: "Les modifications ont été enregistrées." });
-        setDialogOpen(false);
-        setEditingInfo(null);
-        form.reset();
-      },
-      onError: (error: Error) => {
-        toast({ title: "Erreur", description: error.message, variant: "destructive" });
-      },
-    }
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["promoCodes", userId] });
+      queryClient.invalidateQueries({ queryKey: ["links", userId] });
+      queryClient.invalidateQueries({ queryKey: ["examples", userId] });
+      queryClient.invalidateQueries({ queryKey: ["rules", userId] });
+      toast({ title: "Information modifiée !", description: "Les modifications ont été enregistrées." });
+      setDialogOpen(false);
+      setEditingInfo(null);
+      form.reset();
+    },
+    onError: (error: Error) => {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    },
+  });
 
-  const deleteMutation = useMutation(
-    async ({ infoToDelete, userId }: { infoToDelete: BotInfoDisplayItem; userId: string }) => {
+  const deleteMutation = useMutation<void, Error, { infoToDelete: BotInfoDisplayItem; userId: string }>({ // Specify types
+    mutationFn: async ({ infoToDelete, userId: currentUserId }) => {
       let tableName: keyof Database['public']['Tables'] | '' = '';
       switch (infoToDelete.type) {
         case "promo": tableName = "code_promo"; break;
@@ -311,25 +315,23 @@ const BotInfo = () => {
       if (!tableName) throw new Error("Invalid type for deletion");
 
       const { error } = await supabase
-        .from(tableName)
+        .from(tableName as keyof Database['public']['Tables']) // Cast tableName
         .delete()
         .eq("id", infoToDelete.id)
-        .eq("user_profile", userId);
+        .eq("user_profile", currentUserId);
       if (error) throw error;
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["promoCodes", userId] });
-        queryClient.invalidateQueries({ queryKey: ["links", userId] });
-        queryClient.invalidateQueries({ queryKey: ["examples", userId] });
-        queryClient.invalidateQueries({ queryKey: ["rules", userId] });
-        toast({ title: "Information supprimée", description: "L'information a été supprimée avec succès." });
-      },
-      onError: (error: Error) => {
-        toast({ title: "Erreur", description: error.message, variant: "destructive" });
-      },
-    }
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["promoCodes", userId] });
+      queryClient.invalidateQueries({ queryKey: ["links", userId] });
+      queryClient.invalidateQueries({ queryKey: ["examples", userId] });
+      queryClient.invalidateQueries({ queryKey: ["rules", userId] });
+      toast({ title: "Information supprimée", description: "L'information a été supprimée avec succès." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    },
+  });
 
   const handleDeleteInfo = (info: BotInfoDisplayItem) => {
     if (!userId) return;
@@ -384,7 +386,7 @@ const BotInfo = () => {
         return <LinkIconLucide className="h-4 w-4" />;
       case "example":
         return <MessageSquare className="h-4 w-4" />;
-      case "rules": // Updated from "info"
+      case "rules":
       default:
         return <Info className="h-4 w-4" />;
     }
@@ -394,9 +396,6 @@ const BotInfo = () => {
     (info) => activeType === "all" || info.type === activeType
   );
   
-  // Since 'category' is removed, we don't group by category anymore.
-  // The display will directly map over `filteredBotInfos`.
-
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -428,7 +427,7 @@ const BotInfo = () => {
                   <TabsTrigger value="promo">Codes promo</TabsTrigger>
                   <TabsTrigger value="link">Liens</TabsTrigger>
                   <TabsTrigger value="example">Exemples</TabsTrigger>
-                  <TabsTrigger value="rules">Règles</TabsTrigger> {/* Changed from "info" to "rules" */}
+                  <TabsTrigger value="rules">Règles</TabsTrigger>
                 </TabsList>
               </Tabs>
 
@@ -464,7 +463,7 @@ const BotInfo = () => {
                           </div>
                           {info.type === "link" ? (
                             <a
-                              href={info.content}
+                              href={info.content.startsWith('http') ? info.content : `//${info.content}`} // Ensure protocol for links
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center gap-1 text-sm text-primary underline"
@@ -483,14 +482,14 @@ const BotInfo = () => {
                       </CardContent>
                       <CardFooter className="border-t bg-muted/50 px-6 py-3">
                         <div className="flex items-center justify-between w-full text-xs text-muted-foreground">
-                          <span>Créé le {info.createdAt}</span> {/* Changed from Mis à jour le */}
+                          <span>Créé le {info.createdAt}</span>
                           <div className="flex gap-2">
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7"
                               onClick={() => handleEditInfo(info)}
-                              disabled={deleteMutation.isLoading || editMutation.isLoading || addMutation.isLoading}
+                              disabled={deleteMutation.isPending || editMutation.isPending || addMutation.isPending}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -499,7 +498,7 @@ const BotInfo = () => {
                               size="icon"
                               className="h-7 w-7 text-destructive"
                               onClick={() => handleDeleteInfo(info)}
-                              disabled={deleteMutation.isLoading || editMutation.isLoading || addMutation.isLoading}
+                              disabled={deleteMutation.isPending || editMutation.isPending || addMutation.isPending}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -510,7 +509,7 @@ const BotInfo = () => {
                   ))}
                 </div>
               ) : (
-                !isLoadingData && ( // Only show "No information" if not loading
+                !isLoadingData && ( 
                   <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
                     <div className="rounded-full bg-primary/10 p-4 text-primary">
                       <Info className="h-6 w-6" />
@@ -560,7 +559,6 @@ const BotInfo = () => {
                 )}
               />
 
-              {/* Category field removed */}
               <FormField
                 control={form.control}
                 name="type"
@@ -571,6 +569,7 @@ const BotInfo = () => {
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                       value={field.value}
+                      disabled={!!editingInfo} // Disable type change when editing
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -581,7 +580,7 @@ const BotInfo = () => {
                         <SelectItem value="promo">Code promo</SelectItem>
                         <SelectItem value="link">Lien</SelectItem>
                         <SelectItem value="example">Exemple de conversation</SelectItem>
-                        <SelectItem value="rules">Règle</SelectItem> {/* Changed from info to rules */}
+                        <SelectItem value="rules">Règle</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -608,8 +607,8 @@ const BotInfo = () => {
               />
 
               <DialogFooter>
-                <Button type="submit" disabled={addMutation.isLoading || editMutation.isLoading}>
-                  {(addMutation.isLoading || editMutation.isLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" disabled={addMutation.isPending || editMutation.isPending}>
+                  {(addMutation.isPending || editMutation.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <Check className="mr-2 h-4 w-4" />
                   {editingInfo ? "Enregistrer les modifications" : "Ajouter l'information"}
                 </Button>
@@ -623,4 +622,3 @@ const BotInfo = () => {
 };
 
 export default BotInfo;
-
