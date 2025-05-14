@@ -6,7 +6,8 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { FileText, Bookmark, HelpCircle, Info, MessageSquare, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase, Database } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
