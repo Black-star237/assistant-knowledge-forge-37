@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -44,32 +43,25 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Tables } from "@/integrations/supabase/types";
 
+// Form schema: 'category' is still here, but DB table 'procédures' doesn't have it.
+// This will need to be reconciled later if category functionality is desired.
 const formSchema = z.object({
-  title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
-  description: z.string().min(10, "La description doit contenir au moins 10 caractères"),
-  steps: z.string().min(10, "Les étapes doivent contenir au moins 10 caractères"),
-  category: z.string().min(1, "La catégorie est requise"),
+  title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"), // Maps to Titre_procedure
+  description: z.string().min(10, "La description doit contenir au moins 10 caractères"), // Maps to description
+  steps: z.string().min(10, "Les étapes doivent contenir au moins 10 caractères"), // Maps to etapes_procedure
+  category: z.string().min(1, "La catégorie est requise"), // No direct DB column in 'procédures'
 });
 
-// Interface pour les données brutes de la base de données
-interface DbProcedure {
-  id: number;
-  created_at: string;
-  user_id: string | null;
-  "Inscription 1xbet": string | null;
-  "Inscription Mega pari": string | null;
-  "Inscription melbet": string | null;
-}
-
-// Définir le type de procédure pour l'affichage
+// Display type for procedures
 interface Procedure {
   id: number;
   title: string;
   description: string;
   steps: string;
-  category: string;
-  updated_at: string;
+  category: string; // Kept for UI grouping, but not from DB directly
+  updated_at: string; // from created_at
 }
 
 const Procedures = () => {
@@ -79,73 +71,65 @@ const Procedures = () => {
   const [editingProcedure, setEditingProcedure] = useState<Procedure | null>(null);
 
   // Fetch procedures with React Query
-  const { data: proceduresData = [], isLoading } = useQuery({
+  const { data: proceduresData = [], isLoading } = useQuery<Tables<'procédures'>[], Error>({
     queryKey: ['procedures'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('procédures')
-        .select('*')
+        .select('*') // Selects Titre_procedure, description, etapes_procedure, etc.
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as DbProcedure[];
+      return data || []; // Ensure data is not null
     }
   });
 
-  // Convert DB data to display format
-  const procedures: Procedure[] = proceduresData.map((item) => {
-    // Prenons le premier champ non-null des colonnes Inscription*
-    let procedureContent = item["Inscription 1xbet"] || item["Inscription Mega pari"] || item["Inscription melbet"] || "";
-    let title = "Procédure " + (item["Inscription 1xbet"] ? "1xbet" : item["Inscription Mega pari"] ? "Mega pari" : "melbet");
-    let category = "Inscription";
-    
+  // Convert DB data (Tables<'procédures'>) to display format (Procedure)
+  const procedures: Procedure[] = proceduresData.map((item: Tables<'procédures'>) => {
     return {
       id: item.id,
-      title: title,
-      description: "Guide d'inscription étape par étape",
-      steps: procedureContent,
-      category: category,
-      updated_at: item.created_at
+      title: item.Titre_procedure || "Procédure sans titre",
+      description: item.description || "Pas de description",
+      steps: item.etapes_procedure || "",
+      // Category is not in item from DB. Assign a default or handle as needed.
+      // For now, to make UI work, using a default. This needs review for actual category logic.
+      category: "Général", // Placeholder
+      updated_at: item.created_at 
     };
   });
 
   // Add or update procedure mutation
-  const mutation = useMutation({
+  const mutation = useMutation<void, Error, z.infer<typeof formSchema>>({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      // Déterminons la colonne à mettre à jour selon la catégorie/titre
-      let updateColumn = "Inscription 1xbet"; // Par défaut
-      if (values.title.toLowerCase().includes("mega")) {
-        updateColumn = "Inscription Mega pari";
-      } else if (values.title.toLowerCase().includes("melbet")) {
-        updateColumn = "Inscription melbet";
-      }
+      // Map form values to DB column names from 'procédures' table
+      const dbPayload = {
+        Titre_procedure: values.title,
+        description: values.description,
+        etapes_procedure: values.steps,
+        // 'user_id' is not in the form, handle implicitly via RLS or if table requires it
+        // 'category' from form (values.category) is not saved as 'procédures' table lacks this column.
+      };
       
       if (editingProcedure) {
         const { error } = await supabase
           .from('procédures')
-          .update({
-            [updateColumn]: values.steps
-          })
+          .update(dbPayload)
           .eq('id', editingProcedure.id);
           
         if (error) throw error;
-        return { action: 'update', values };
       } else {
         const { error } = await supabase
           .from('procédures')
-          .insert({
-            [updateColumn]: values.steps
-          });
+          .insert(dbPayload);
           
         if (error) throw error;
-        return { action: 'insert', values };
       }
     },
-    onSuccess: (result) => {
+    onSuccess: () => { // Removed result parameter
       queryClient.invalidateQueries({ queryKey: ['procedures'] });
       toast({
-        title: result.action === 'update' ? "Procédure modifiée !" : "Procédure ajoutée !",
-        description: result.action === 'update' 
+        title: editingProcedure ? "Procédure modifiée !" : "Procédure ajoutée !",
+        description: editingProcedure 
           ? "Les modifications ont été enregistrées avec succès." 
           : "La nouvelle procédure a été créée avec succès.",
       });
@@ -163,7 +147,7 @@ const Procedures = () => {
   });
 
   // Delete procedure mutation
-  const deleteMutation = useMutation({
+  const deleteMutation = useMutation<void, Error, number>({
     mutationFn: async (id: number) => {
       const { error } = await supabase
         .from('procédures')
@@ -171,9 +155,8 @@ const Procedures = () => {
         .eq('id', id);
         
       if (error) throw error;
-      return id;
     },
-    onSuccess: (id) => {
+    onSuccess: () => { // Removed id parameter
       queryClient.invalidateQueries({ queryKey: ['procedures'] });
       toast({
         title: "Procédure supprimée",
@@ -195,7 +178,7 @@ const Procedures = () => {
       title: "",
       description: "",
       steps: "",
-      category: "",
+      category: "Général", // Default category for form
     },
   });
 
@@ -209,7 +192,7 @@ const Procedures = () => {
       title: procedure.title,
       description: procedure.description,
       steps: procedure.steps,
-      category: procedure.category,
+      category: procedure.category, // Form still uses category
     });
     setDialogOpen(true);
   };
@@ -220,7 +203,7 @@ const Procedures = () => {
 
   const handleAddNew = () => {
     setEditingProcedure(null);
-    form.reset();
+    form.reset(); // Resets to defaultValues, including category: "Général"
     setDialogOpen(true);
   };
 
@@ -299,6 +282,7 @@ const Procedures = () => {
                                       size="icon"
                                       className="h-7 w-7"
                                       onClick={() => handleEditProcedure(procedure)}
+                                      disabled={mutation.isPending || deleteMutation.isPending}
                                     >
                                       <Edit className="h-4 w-4" />
                                     </Button>
@@ -307,7 +291,7 @@ const Procedures = () => {
                                       size="icon"
                                       className="h-7 w-7 text-destructive"
                                       onClick={() => handleDeleteProcedure(procedure.id)}
-                                      disabled={deleteMutation.isPending}
+                                      disabled={deleteMutation.isPending || mutation.isPending}
                                     >
                                       <Trash2 className="h-4 w-4" />
                                     </Button>
@@ -385,6 +369,8 @@ const Procedures = () => {
                 )}
               />
 
+              {/* Category field is in the form, but 'procédures' table doesn't have 'category' column.
+                  This value won't be saved to DB unless schema changes. */}
               <FormField
                 control={form.control}
                 name="category"

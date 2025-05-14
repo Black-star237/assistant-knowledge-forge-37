@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -56,7 +56,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useMutation, useQueryClient, type UseMutationOptions } from "@tanstack/react-query"; // Added UseMutationOptions
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Tables, Database } from "@/integrations/supabase/types"; // Ensure Database is imported
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -72,10 +72,11 @@ interface BotInfoDisplayItem {
   user_profile?: string | null; 
 }
 
+// Schema for the form (category removed, template type removed, info type renamed to rules)
 const formSchema = z.object({
   title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
   content: z.string().min(10, "Le contenu doit contenir au moins 10 caractères"),
-  type: z.enum(["promo", "link", "example", "rules"], {
+  type: z.enum(["promo", "link", "example", "rules"], { // Updated types
     required_error: "Le type est requis",
   }),
 });
@@ -90,6 +91,8 @@ const mapToDisplayItem = (
   let title = '';
   let content = '';
 
+  // All relevant tables have 'titre' except 'exemples_de_discussions' which might use it for a general topic
+  // and 'liens_utiles' after our migration.
   if ('titre' in item && item.titre) {
     title = item.titre;
   }
@@ -100,14 +103,12 @@ const mapToDisplayItem = (
     content = item.contenu;
   }
   
-  // For links, if title was not set from 'titre' (e.g. older entries before 'titre' column or if it's null)
-  // and we want a fallback, we could use content. But 'liens_utiles' now has 'titre'.
+  // For links, title comes from the new 'titre' column.
+  // If 'titre' is somehow null/empty for a link (e.g. old data before migration or not set),
+  // we use the URL (content) as a fallback for title.
   if (type === 'link' && !title && 'contenu' in item && item.contenu) {
-     // If 'titre' is null/empty for a link, we might use the URL (content) as title
-     // or leave it, depends on desired behavior. The form now has a 'titre' field for links.
-     title = item.contenu; // Fallback if 'titre' is empty
+     title = item.contenu; 
   }
-
 
   return {
     id: item.id,
@@ -116,7 +117,7 @@ const mapToDisplayItem = (
     type: type,
     createdAt: format(new Date(item.created_at), "d MMMM yyyy", { locale: fr }),
     dbCreatedAt: item.created_at,
-    user_profile: item.user_profile || ( 'user_id' in item ? item.user_id : null ), // Handle user_id if present
+    user_profile: item.user_profile, // Corrected: Directly use item.user_profile
   };
 };
 
@@ -204,7 +205,7 @@ const BotInfo = () => {
 
   const isLoadingData = isLoadingPromo || isLoadingLinks || isLoadingExamples || isLoadingRules || authLoading;
 
-  const allBotInfos: BotInfoDisplayItem[] = React.useMemo(() => {
+  const allBotInfos: BotInfoDisplayItem[] = useMemo(() => {
     return [
       ...(promoData || []),
       ...(linkData || []),
@@ -214,8 +215,8 @@ const BotInfo = () => {
   }, [promoData, linkData, exampleData, rulesData]);
 
 
-  const addMutation = useMutation<void, Error, { values: FormData; userId: string }>({ // Specify types for useMutation
-    mutationFn: async ({ values, userId: currentUserId }) => {
+  const addMutation = useMutation<void, Error, { values: FormData; userId: string }>({
+    mutationFn: async ({ values, userId: currentUserId }) => { // Added mutationFn key
       let tableName: keyof Database['public']['Tables'] | '' = '';
       let payload: any = {};
 
@@ -226,7 +227,6 @@ const BotInfo = () => {
           break;
         case "link":
           tableName = "liens_utiles";
-          // Ensure 'titre' is included in the payload for 'liens_utiles'
           payload = { titre: values.title, contenu: values.content, user_profile: currentUserId };
           break;
         case "example":
@@ -238,8 +238,9 @@ const BotInfo = () => {
           payload = { titre: values.title, contenu: values.content, user_profile: currentUserId };
           break;
       }
-      if (!tableName) throw new Error("Invalid type");
-      const { error } = await supabase.from(tableName as keyof Database['public']['Tables']).insert(payload); // Cast tableName
+      if (!tableName) throw new Error("Invalid type"); // This will refine tableName type for Supabase call
+      
+      const { error } = await supabase.from(tableName).insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -256,8 +257,8 @@ const BotInfo = () => {
     },
   });
 
-  const editMutation = useMutation<void, Error, { values: FormData; editingInfo: BotInfoDisplayItem; userId: string }>({ // Specify types
-    mutationFn: async ({ values, editingInfo: currentEditingInfo, userId: currentUserId }) => {
+  const editMutation = useMutation<void, Error, { values: FormData; editingInfo: BotInfoDisplayItem; userId: string }>({
+    mutationFn: async ({ values, editingInfo: currentEditingInfo, userId: currentUserId }) => { // Added mutationFn key
       let tableName: keyof Database['public']['Tables'] | '' = '';
       let payload: any = {};
 
@@ -279,10 +280,10 @@ const BotInfo = () => {
           payload = { titre: values.title, contenu: values.content };
           break;
       }
-      if (!tableName) throw new Error("Invalid type for editing");
+      if (!tableName) throw new Error("Invalid type for editing"); // Refines tableName type
 
       const { error } = await supabase
-        .from(tableName as keyof Database['public']['Tables']) // Cast tableName
+        .from(tableName) 
         .update(payload)
         .eq("id", currentEditingInfo.id)
         .eq("user_profile", currentUserId); 
@@ -303,8 +304,8 @@ const BotInfo = () => {
     },
   });
 
-  const deleteMutation = useMutation<void, Error, { infoToDelete: BotInfoDisplayItem; userId: string }>({ // Specify types
-    mutationFn: async ({ infoToDelete, userId: currentUserId }) => {
+  const deleteMutation = useMutation<void, Error, { infoToDelete: BotInfoDisplayItem; userId: string }>({
+    mutationFn: async ({ infoToDelete, userId: currentUserId }) => { // Added mutationFn key
       let tableName: keyof Database['public']['Tables'] | '' = '';
       switch (infoToDelete.type) {
         case "promo": tableName = "code_promo"; break;
@@ -312,10 +313,10 @@ const BotInfo = () => {
         case "example": tableName = "exemples_de_discussions"; break;
         case "rules": tableName = "regles"; break;
       }
-      if (!tableName) throw new Error("Invalid type for deletion");
+      if (!tableName) throw new Error("Invalid type for deletion"); // Refines tableName type
 
       const { error } = await supabase
-        .from(tableName as keyof Database['public']['Tables']) // Cast tableName
+        .from(tableName)
         .delete()
         .eq("id", infoToDelete.id)
         .eq("user_profile", currentUserId);
@@ -365,11 +366,12 @@ const BotInfo = () => {
     form.reset({
       title: "",
       content: "",
-      type: "promo", // Default type
+      type: "promo", 
     });
     setDialogOpen(true);
   };
 
+  // ... keep existing code (handleCopyContent, getTypeIcon)
   const handleCopyContent = (content: string) => {
     navigator.clipboard.writeText(content);
     toast({
@@ -387,7 +389,7 @@ const BotInfo = () => {
       case "example":
         return <MessageSquare className="h-4 w-4" />;
       case "rules":
-      default:
+      default: // Default to rules icon if type is somehow unexpected
         return <Info className="h-4 w-4" />;
     }
   };
@@ -427,7 +429,7 @@ const BotInfo = () => {
                   <TabsTrigger value="promo">Codes promo</TabsTrigger>
                   <TabsTrigger value="link">Liens</TabsTrigger>
                   <TabsTrigger value="example">Exemples</TabsTrigger>
-                  <TabsTrigger value="rules">Règles</TabsTrigger>
+                  <TabsTrigger value="rules">Règles</TabsTrigger> {/* Renamed from Informations */}
                 </TabsList>
               </Tabs>
 
@@ -463,7 +465,7 @@ const BotInfo = () => {
                           </div>
                           {info.type === "link" ? (
                             <a
-                              href={info.content.startsWith('http') ? info.content : `//${info.content}`} // Ensure protocol for links
+                              href={info.content.startsWith('http') ? info.content : `//${info.content}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center gap-1 text-sm text-primary underline"
@@ -569,7 +571,7 @@ const BotInfo = () => {
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                       value={field.value}
-                      disabled={!!editingInfo} // Disable type change when editing
+                      disabled={!!editingInfo} 
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -580,7 +582,7 @@ const BotInfo = () => {
                         <SelectItem value="promo">Code promo</SelectItem>
                         <SelectItem value="link">Lien</SelectItem>
                         <SelectItem value="example">Exemple de conversation</SelectItem>
-                        <SelectItem value="rules">Règle</SelectItem>
+                        <SelectItem value="rules">Règle</SelectItem> {/* Renamed from info */}
                       </SelectContent>
                     </Select>
                     <FormMessage />

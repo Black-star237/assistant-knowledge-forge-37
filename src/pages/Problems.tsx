@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -39,35 +39,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Tables } from "@/integrations/supabase/types"; // Import Tables type
 
 const formSchema = z.object({
   title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
-  problem: z.string().min(10, "La description du problème doit contenir au moins 10 caractères"),
-  solution: z.string().min(10, "La solution doit contenir au moins 10 caractères"),
-  tags: z.string(),
-  category: z.string().min(1, "La catégorie est requise"),
+  problem: z.string().min(10, "La description du problème doit contenir au moins 10 caractères"), // Corresponds to 'Description' in DB
+  solution: z.string().min(10, "La solution doit contenir au moins 10 caractères"), // Corresponds to 'Solutions' in DB
+  tags: z.string(), // Corresponds to 'tags' in DB (comma-separated string)
+  category: z.string().min(1, "La catégorie est requise"), // Corresponds to 'category' in DB
 });
 
-// Interface pour les données brutes de la base de données
-interface DbProblem {
-  id: number;
-  Problèmes: string | null;
-  Solutions: string | null;
-  user_id: string | null;
-  created_at: string;
-  category: string | null;
-  tags: string | null;
-}
-
-// Interface pour l'affichage et la manipulation
+// Interface for display and manipulation (derived from DB schema)
 interface ProblemDisplay {
   id: number;
-  title: string;
-  problem: string;
-  solution: string;
-  tags: string[];
-  category: string;
-  updated_at: string;
+  title: string; // Derived or from 'titre' in DB
+  problem: string; // From 'Description' in DB
+  solution: string; // From 'Solutions'in DB
+  tags: string[]; // Parsed from 'tags' string
+  category: string; // From 'category' in DB
+  updated_at: string; // From 'created_at' in DB
 }
 
 const Problems = () => {
@@ -79,7 +69,7 @@ const Problems = () => {
   const [activeCategory, setActiveCategory] = useState("all");
 
   // Fetch problems with React Query
-  const { data: problemsData = [], isLoading } = useQuery({
+  const { data: problemsData = [], isLoading } = useQuery<Tables<'problèmes_et_solutions'>[], Error>({ // Use Tables type
     queryKey: ['problems'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -88,63 +78,59 @@ const Problems = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as DbProblem[];
+      return data || []; // Ensure data is not null
     }
   });
 
-  // Convert DB data to our display format
-  const problems: ProblemDisplay[] = problemsData.map(item => {
-    // Essayons d'extraire un titre et une catégorie du problème
-    const problemText = item.Problèmes || "Problème sans titre";
-    let title = problemText.split('\n')[0].substring(0, 50); // Première ligne comme titre
-    if (title.length >= 50) title += '...';
+  // Convert DB data (Tables<'problèmes_et_solutions'>) to our display format (ProblemDisplay)
+  const problems: ProblemDisplay[] = problemsData.map((item: Tables<'problèmes_et_solutions'>) => {
+    // Use 'titre' if available, otherwise derive from 'Description'
+    const title = item.titre || (item.Description || "Problème sans titre").split('\n')[0].substring(0, 50);
     
     return {
       id: item.id,
-      title: title,
-      problem: item.Problèmes || "",
+      title: item.titre || title + (item.titre && title.length >=50 ? '...' : ''),
+      problem: item.Description || "", // Use item.Description for problem
       solution: item.Solutions || "",
-      tags: item.tags ? item.tags.split(',').map(tag => tag.trim()) : [],  // Utiliser la colonne tags si elle existe
-      category: item.category || "Général", // Utiliser la colonne category si elle existe
+      tags: item.tags ? item.tags.split(',').map(tag => tag.trim()) : [],
+      category: item.category || "Général",
       updated_at: item.created_at
     };
   });
 
   // Add or update problem mutation
-  const mutation = useMutation({
+  const mutation = useMutation<void, Error, z.infer<typeof formSchema>>({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
+      // Map form values to DB column names
+      const dbPayload = {
+        titre: values.title, // 'title' from form maps to 'titre' in DB
+        Description: values.problem, // 'problem' from form maps to 'Description' in DB
+        Solutions: values.solution,
+        tags: values.tags,
+        category: values.category,
+        // user_id is not in form, Supabase RLS should handle user association if needed or it's implicit
+      };
+
       if (editingProblem) {
         const { error } = await supabase
           .from('problèmes_et_solutions')
-          .update({
-            Problèmes: values.problem,
-            Solutions: values.solution,
-            category: values.category,
-            tags: values.tags
-          })
+          .update(dbPayload)
           .eq('id', editingProblem.id);
           
         if (error) throw error;
-        return { action: 'update', values };
       } else {
         const { error } = await supabase
           .from('problèmes_et_solutions')
-          .insert({
-            Problèmes: values.problem,
-            Solutions: values.solution,
-            category: values.category,
-            tags: values.tags
-          });
+          .insert(dbPayload);
           
         if (error) throw error;
-        return { action: 'insert', values };
       }
     },
-    onSuccess: (result) => {
+    onSuccess: () => { // Removed result parameter as mutationFn returns void
       queryClient.invalidateQueries({ queryKey: ['problems'] });
       toast({
-        title: result.action === 'update' ? "Problème modifié !" : "Problème ajouté !",
-        description: result.action === 'update' 
+        title: editingProblem ? "Problème modifié !" : "Problème ajouté !",
+        description: editingProblem 
           ? "Les modifications ont été enregistrées avec succès." 
           : "Le nouveau problème et sa solution ont été créés avec succès.",
       });
@@ -162,7 +148,7 @@ const Problems = () => {
   });
 
   // Delete problem mutation
-  const deleteMutation = useMutation({
+  const deleteMutation = useMutation<void, Error, number>({ // id is number
     mutationFn: async (id: number) => {
       const { error } = await supabase
         .from('problèmes_et_solutions')
@@ -170,9 +156,8 @@ const Problems = () => {
         .eq('id', id);
         
       if (error) throw error;
-      return id;
     },
-    onSuccess: (id) => {
+    onSuccess: () => { // Removed id parameter
       queryClient.invalidateQueries({ queryKey: ['problems'] });
       toast({
         title: "Problème supprimé",
@@ -207,7 +192,7 @@ const Problems = () => {
     setEditingProblem(problem);
     form.reset({
       title: problem.title,
-      problem: problem.problem,
+      problem: problem.problem, // 'problem' in display maps to 'Description' in DB
       solution: problem.solution,
       tags: problem.tags.join(", "),
       category: problem.category,
@@ -282,7 +267,7 @@ const Problems = () => {
                       <TabsList className="w-full sm:w-auto">
                         {categories.map((category) => (
                           <TabsTrigger key={category} value={category} className="capitalize">
-                            {category}
+                            {category === "all" ? "Tous" : category}
                           </TabsTrigger>
                         ))}
                       </TabsList>
@@ -342,6 +327,7 @@ const Problems = () => {
                               size="icon"
                               className="h-7 w-7"
                               onClick={() => handleEditProblem(problem)}
+                              disabled={mutation.isPending || deleteMutation.isPending}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -350,7 +336,7 @@ const Problems = () => {
                               size="icon"
                               className="h-7 w-7 text-destructive"
                               onClick={() => handleDeleteProblem(problem.id)}
-                              disabled={deleteMutation.isPending}
+                              disabled={deleteMutation.isPending || mutation.isPending}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -376,7 +362,9 @@ const Problems = () => {
                     <>
                       <h3 className="mt-4 text-lg font-semibold">Aucun problème</h3>
                       <p className="mt-2 text-sm text-muted-foreground">
-                        Vous n'avez pas encore ajouté de problèmes et solutions.
+                        {activeCategory === "all" 
+                          ? "Vous n'avez pas encore ajouté de problèmes et solutions."
+                          : `Aucun problème dans la catégorie "${activeCategory}".`}
                       </p>
                       <Button onClick={handleAddNew} className="mt-4">
                         <Plus className="mr-2 h-4 w-4" /> Ajouter un problème
@@ -434,7 +422,7 @@ const Problems = () => {
 
               <FormField
                 control={form.control}
-                name="problem"
+                name="problem" // Maps to 'Description' in DB
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Description du problème</FormLabel>
@@ -452,7 +440,7 @@ const Problems = () => {
 
               <FormField
                 control={form.control}
-                name="solution"
+                name="solution" // Maps to 'Solutions' in DB
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Solution</FormLabel>
