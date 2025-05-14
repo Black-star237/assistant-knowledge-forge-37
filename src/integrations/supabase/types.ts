@@ -9,6 +9,38 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      code_promo: {
+        Row: {
+          contenu: string | null
+          created_at: string
+          id: number
+          titre: string | null
+          user_profile: string | null
+        }
+        Insert: {
+          contenu?: string | null
+          created_at?: string
+          id?: number
+          titre?: string | null
+          user_profile?: string | null
+        }
+        Update: {
+          contenu?: string | null
+          created_at?: string
+          id?: number
+          titre?: string | null
+          user_profile?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "code_promo_user_profile_fkey"
+            columns: ["user_profile"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coupons: {
         Row: {
           code_du_coupon: string | null
@@ -77,6 +109,38 @@ export type Database = {
         }
         Relationships: []
       }
+      exemples_de_discussions: {
+        Row: {
+          created_at: string
+          discussion: string | null
+          id: number
+          titre: string | null
+          user_profile: string | null
+        }
+        Insert: {
+          created_at?: string
+          discussion?: string | null
+          id?: number
+          titre?: string | null
+          user_profile?: string | null
+        }
+        Update: {
+          created_at?: string
+          discussion?: string | null
+          id?: number
+          titre?: string | null
+          user_profile?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exemples_de_discussions_user_profile_fkey"
+            columns: ["user_profile"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       informations_bot: {
         Row: {
           "codes promo": string | null
@@ -84,6 +148,7 @@ export type Database = {
           "exemples de discutions": string | null
           id: string
           "liens utiles": string | null
+          règles: string | null
           user_id: string
         }
         Insert: {
@@ -92,6 +157,7 @@ export type Database = {
           "exemples de discutions"?: string | null
           id?: string
           "liens utiles"?: string | null
+          règles?: string | null
           user_id: string
         }
         Update: {
@@ -100,6 +166,7 @@ export type Database = {
           "exemples de discutions"?: string | null
           id?: string
           "liens utiles"?: string | null
+          règles?: string | null
           user_id?: string
         }
         Relationships: [
@@ -112,32 +179,67 @@ export type Database = {
           },
         ]
       }
+      liens_utiles: {
+        Row: {
+          contenu: string | null
+          created_at: string
+          id: number
+          titre: string | null
+          user_profile: string
+        }
+        Insert: {
+          contenu?: string | null
+          created_at?: string
+          id?: number
+          titre?: string | null
+          user_profile: string
+        }
+        Update: {
+          contenu?: string | null
+          created_at?: string
+          id?: number
+          titre?: string | null
+          user_profile?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "liens_utiles_user_profile_fkey"
+            columns: ["user_profile"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       problèmes_et_solutions: {
         Row: {
           category: string | null
           created_at: string
+          Description: string | null
           id: number
-          Problèmes: string | null
           Solutions: string | null
           tags: string | null
+          titre: string | null
           user_id: string | null
         }
         Insert: {
           category?: string | null
           created_at?: string
+          Description?: string | null
           id?: number
-          Problèmes?: string | null
           Solutions?: string | null
           tags?: string | null
+          titre?: string | null
           user_id?: string | null
         }
         Update: {
           category?: string | null
           created_at?: string
+          Description?: string | null
           id?: number
-          Problèmes?: string | null
           Solutions?: string | null
           tags?: string | null
+          titre?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -153,32 +255,64 @@ export type Database = {
       procédures: {
         Row: {
           created_at: string
+          description: string | null
+          etapes_procedure: string | null
           id: number
-          "Inscription 1xbet": string | null
-          "Inscription Mega pari": string | null
-          "Inscription melbet": string | null
+          Titre_procedure: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string
+          description?: string | null
+          etapes_procedure?: string | null
           id?: number
-          "Inscription 1xbet"?: string | null
-          "Inscription Mega pari"?: string | null
-          "Inscription melbet"?: string | null
+          Titre_procedure?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string
+          description?: string | null
+          etapes_procedure?: string | null
           id?: number
-          "Inscription 1xbet"?: string | null
-          "Inscription Mega pari"?: string | null
-          "Inscription melbet"?: string | null
+          Titre_procedure?: string | null
           user_id?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "Procédures_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      regles: {
+        Row: {
+          contenu: string | null
+          created_at: string
+          id: number
+          titre: string | null
+          user_profile: string | null
+        }
+        Insert: {
+          contenu?: string | null
+          created_at?: string
+          id?: number
+          titre?: string | null
+          user_profile?: string | null
+        }
+        Update: {
+          contenu?: string | null
+          created_at?: string
+          id?: number
+          titre?: string | null
+          user_profile?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regles_user_profile_fkey"
+            columns: ["user_profile"]
             isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
