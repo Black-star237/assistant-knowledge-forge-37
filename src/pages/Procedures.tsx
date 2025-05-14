@@ -43,7 +43,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
+import { useAuth } from "@/context/AuthContext"; // Import useAuth
 
 // Form schema: 'category' is still here, but DB table 'procédures' doesn't have it.
 // This will need to be reconciled later if category functionality is desired.
@@ -62,11 +63,13 @@ interface Procedure {
   steps: string;
   category: string; // Kept for UI grouping, but not from DB directly
   updated_at: string; // from created_at
+  user_id?: string | null; // Make user_id optional for display if not always present
 }
 
 const Procedures = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth(); // Get the authenticated user
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProcedure, setEditingProcedure] = useState<Procedure | null>(null);
 
@@ -94,15 +97,25 @@ const Procedures = () => {
       // Category is not in item from DB. Assign a default or handle as needed.
       // For now, to make UI work, using a default. This needs review for actual category logic.
       category: "Général", // Placeholder
-      updated_at: item.created_at 
+      updated_at: item.created_at,
+      user_id: item.user_id,
     };
   });
 
+  type ProcedureMutationVariables = z.infer<typeof formSchema> & { userId?: string };
+
   // Add or update procedure mutation
-  const mutation = useMutation<void, Error, z.infer<typeof formSchema>>({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
-      // Map form values to DB column names from 'procédures' table
-      const dbPayload = {
+  const mutation = useMutation<void, Error, ProcedureMutationVariables>({
+    mutationFn: async (values: ProcedureMutationVariables) => {
+      if (!user && !values.userId) {
+        throw new Error("Utilisateur non authentifié ou ID utilisateur manquant.");
+      }
+      const currentUserId = user?.id || values.userId;
+      if (!currentUserId) {
+        throw new Error("ID utilisateur non trouvé.");
+      }
+
+      const dbPayload: TablesInsert<'procédures'> | TablesUpdate<'procédures'> = {
         Titre_procedure: values.title,
         description: values.description,
         etapes_procedure: values.steps,
@@ -111,16 +124,25 @@ const Procedures = () => {
       };
       
       if (editingProcedure) {
+        const updatePayload: TablesUpdate<'procédures'> = {
+            ...dbPayload,
+            // user_id should not be updated generally, but if needed:
+            // user_id: currentUserId, 
+        };
         const { error } = await supabase
           .from('procédures')
-          .update(dbPayload)
+          .update(updatePayload)
           .eq('id', editingProcedure.id);
           
         if (error) throw error;
       } else {
+        const insertPayload: TablesInsert<'procédures'> = {
+            ...dbPayload,
+            user_id: currentUserId,
+        };
         const { error } = await supabase
           .from('procédures')
-          .insert(dbPayload);
+          .insert(insertPayload);
           
         if (error) throw error;
       }
@@ -198,12 +220,20 @@ const Procedures = () => {
   };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    mutation.mutate(values);
+    if (!user?.id) {
+        toast({ title: "Erreur", description: "Vous devez être connecté pour effectuer cette action.", variant: "destructive" });
+        return;
+    }
+    mutation.mutate({ ...values, userId: user.id });
   };
 
   const handleAddNew = () => {
+    if (!user) {
+      toast({ title: "Non autorisé", description: "Veuillez vous connecter pour ajouter une procédure.", variant: "destructive" });
+      return;
+    }
     setEditingProcedure(null);
-    form.reset(); // Resets to defaultValues, including category: "Général"
+    form.reset();
     setDialogOpen(true);
   };
 

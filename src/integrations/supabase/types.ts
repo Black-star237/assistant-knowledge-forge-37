@@ -220,7 +220,7 @@ export type Database = {
           Solutions: string | null
           tags: string | null
           titre: string | null
-          user_id: string | null
+          user_profile: string | null
         }
         Insert: {
           category?: string | null
@@ -230,7 +230,7 @@ export type Database = {
           Solutions?: string | null
           tags?: string | null
           titre?: string | null
-          user_id?: string | null
+          user_profile?: string | null
         }
         Update: {
           category?: string | null
@@ -240,12 +240,12 @@ export type Database = {
           Solutions?: string | null
           tags?: string | null
           titre?: string | null
-          user_id?: string | null
+          user_profile?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "Quelques problèmes et leurs solutions_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "problèmes_et_solutions_user_profile_fkey"
+            columns: ["user_profile"]
             isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
@@ -324,25 +324,28 @@ export type Database = {
           created_at: string | null
           id: string
           nom: string | null
-          "Numero perso": string | null
-          "Numero whatsapp": string | null
-          valeure: string | null
+          "Numero whatsapp Bot": string | null
+          "Numero Whatsapp perso": string | null
+          Offre: string | null
+          "Photo de profile": string | null
         }
         Insert: {
           created_at?: string | null
           id: string
           nom?: string | null
-          "Numero perso"?: string | null
-          "Numero whatsapp"?: string | null
-          valeure?: string | null
+          "Numero whatsapp Bot"?: string | null
+          "Numero Whatsapp perso"?: string | null
+          Offre?: string | null
+          "Photo de profile"?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           nom?: string | null
-          "Numero perso"?: string | null
-          "Numero whatsapp"?: string | null
-          valeure?: string | null
+          "Numero whatsapp Bot"?: string | null
+          "Numero Whatsapp perso"?: string | null
+          Offre?: string | null
+          "Photo de profile"?: string | null
         }
         Relationships: []
       }

@@ -39,14 +39,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Tables } from "@/integrations/supabase/types"; // Import Tables type
+import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
+import { useAuth } from "@/context/AuthContext"; // Import useAuth
 
 const formSchema = z.object({
   title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
-  problem: z.string().min(10, "La description du problème doit contenir au moins 10 caractères"), // Corresponds to 'Description' in DB
-  solution: z.string().min(10, "La solution doit contenir au moins 10 caractères"), // Corresponds to 'Solutions' in DB
-  tags: z.string(), // Corresponds to 'tags' in DB (comma-separated string)
-  category: z.string().min(1, "La catégorie est requise"), // Corresponds to 'category' in DB
+  problem: z.string().min(10, "La description du problème doit contenir au moins 10 caractères"),
+  solution: z.string().min(10, "La solution doit contenir au moins 10 caractères"),
+  tags: z.string(),
+  category: z.string().min(1, "La catégorie est requise"),
 });
 
 // Interface for display and manipulation (derived from DB schema)
@@ -58,18 +59,20 @@ interface ProblemDisplay {
   tags: string[]; // Parsed from 'tags' string
   category: string; // From 'category' in DB
   updated_at: string; // From 'created_at' in DB
+  user_profile?: string | null; // Make user_profile optional
 }
 
 const Problems = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth(); // Get the authenticated user
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProblem, setEditingProblem] = useState<ProblemDisplay | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
 
   // Fetch problems with React Query
-  const { data: problemsData = [], isLoading } = useQuery<Tables<'problèmes_et_solutions'>[], Error>({ // Use Tables type
+  const { data: problemsData = [], isLoading } = useQuery<Tables<'problèmes_et_solutions'>[], Error>({
     queryKey: ['problems'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -78,7 +81,7 @@ const Problems = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data || []; // Ensure data is not null
+      return data || [];
     }
   });
 
@@ -94,14 +97,24 @@ const Problems = () => {
       solution: item.Solutions || "",
       tags: item.tags ? item.tags.split(',').map(tag => tag.trim()) : [],
       category: item.category || "Général",
-      updated_at: item.created_at
+      updated_at: item.created_at,
+      user_profile: item.user_profile,
     };
   });
 
+  type ProblemMutationVariables = z.infer<typeof formSchema> & { userId?: string };
+
   // Add or update problem mutation
-  const mutation = useMutation<void, Error, z.infer<typeof formSchema>>({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
-      // Map form values to DB column names
+  const mutation = useMutation<void, Error, ProblemMutationVariables>({
+    mutationFn: async (values: ProblemMutationVariables) => {
+      if (!user && !values.userId) {
+        throw new Error("Utilisateur non authentifié ou ID utilisateur manquant.");
+      }
+      const currentUserId = user?.id || values.userId;
+      if (!currentUserId) {
+        throw new Error("ID utilisateur non trouvé.");
+      }
+
       const dbPayload = {
         titre: values.title, // 'title' from form maps to 'titre' in DB
         Description: values.problem, // 'problem' from form maps to 'Description' in DB
@@ -112,16 +125,24 @@ const Problems = () => {
       };
 
       if (editingProblem) {
+        const updatePayload: TablesUpdate<'problèmes_et_solutions'> = {
+            ...dbPayload,
+            // user_profile should not be updated generally
+        };
         const { error } = await supabase
           .from('problèmes_et_solutions')
-          .update(dbPayload)
+          .update(updatePayload)
           .eq('id', editingProblem.id);
           
         if (error) throw error;
       } else {
+        const insertPayload: TablesInsert<'problèmes_et_solutions'> = {
+            ...dbPayload,
+            user_profile: currentUserId,
+        };
         const { error } = await supabase
           .from('problèmes_et_solutions')
-          .insert(dbPayload);
+          .insert(insertPayload);
           
         if (error) throw error;
       }
@@ -148,7 +169,7 @@ const Problems = () => {
   });
 
   // Delete problem mutation
-  const deleteMutation = useMutation<void, Error, number>({ // id is number
+  const deleteMutation = useMutation<void, Error, number>({
     mutationFn: async (id: number) => {
       const { error } = await supabase
         .from('problèmes_et_solutions')
@@ -201,10 +222,18 @@ const Problems = () => {
   };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    mutation.mutate(values);
+     if (!user?.id) {
+        toast({ title: "Erreur", description: "Vous devez être connecté pour effectuer cette action.", variant: "destructive" });
+        return;
+    }
+    mutation.mutate({ ...values, userId: user.id });
   };
 
   const handleAddNew = () => {
+    if (!user) {
+      toast({ title: "Non autorisé", description: "Veuillez vous connecter pour ajouter un problème.", variant: "destructive" });
+      return;
+    }
     setEditingProblem(null);
     form.reset();
     setDialogOpen(true);
@@ -422,7 +451,7 @@ const Problems = () => {
 
               <FormField
                 control={form.control}
-                name="problem" // Maps to 'Description' in DB
+                name="problem"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Description du problème</FormLabel>
@@ -440,7 +469,7 @@ const Problems = () => {
 
               <FormField
                 control={form.control}
-                name="solution" // Maps to 'Solutions' in DB
+                name="solution"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Solution</FormLabel>
