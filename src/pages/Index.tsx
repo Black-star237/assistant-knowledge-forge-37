@@ -1,13 +1,80 @@
-
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { StatsOverview } from "@/components/dashboard/StatsOverview";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { FileText, Bookmark, HelpCircle, Info, ArrowRight, MessageSquare } from "lucide-react";
+import { FileText, Bookmark, HelpCircle, Info, ArrowRight, MessageSquare, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+interface StatSummary {
+  count: number;
+  latestCreatedAt: string | null;
+}
+
+const fetchStatSummary = async (tableName: string): Promise<StatSummary> => {
+  const { count, error: countError } = await supabase
+    .from(tableName)
+    .select('*', { count: 'exact', head: true });
+
+  if (countError) {
+    console.error(`Error fetching count for ${tableName}:`, countError);
+    // Fallback or rethrow, for now, log and return partial if possible
+  }
+
+  const { data: latestEntry, error: latestEntryError } = await supabase
+    .from(tableName)
+    .select('created_at')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle(); // Use maybeSingle to avoid error if table is empty
+
+  if (latestEntryError) {
+    console.error(`Error fetching latest entry for ${tableName}:`, latestEntryError);
+  }
+  
+  return {
+    count: count ?? 0,
+    latestCreatedAt: latestEntry?.created_at ?? null,
+  };
+};
+
+const formatCardFooterText = (itemType: string, data?: StatSummary, isLoading?: boolean) => {
+  if (isLoading) {
+    return <span className="flex items-center"><Loader2 className="h-3 w-3 animate-spin mr-1" />Chargement...</span>;
+  }
+  if (!data || data.count === 0) {
+    return `Aucun ${itemType} pour le moment.`;
+  }
+  let text = `${data.count} ${itemType}${data.count > 1 ? 's' : ''}`;
+  if (data.latestCreatedAt) {
+    try {
+      text += ` • Dernier ajout ${formatDistanceToNow(new Date(data.latestCreatedAt), { addSuffix: true, locale: fr })}`;
+    } catch (e) {
+      console.error("Error formatting date for card footer:", data.latestCreatedAt, e);
+      text += ` • Date invalide`;
+    }
+  }
+  return text;
+};
 
 const Index = () => {
+  const { data: dashboardData, isLoading: isLoadingDashboardData } = useQuery({
+    queryKey: ['dashboardStats'],
+    queryFn: async () => {
+      const [coupons, procedures, problems, botInfo] = await Promise.all([
+        fetchStatSummary('coupons'),
+        fetchStatSummary('procédures'), // Note: Supabase table names are exact
+        fetchStatSummary('problèmes_et_solutions'),
+        fetchStatSummary('informations_bot'),
+      ]);
+      return { coupons, procedures, problems, botInfo };
+    }
+  });
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -24,7 +91,7 @@ const Index = () => {
               </div>
 
               <section className="mb-8">
-                <StatsOverview />
+                <StatsOverview data={dashboardData ?? null} isLoading={isLoadingDashboardData} />
               </section>
               
               <section className="mb-8">
@@ -87,7 +154,7 @@ const Index = () => {
                         Ajoutez et gérez les coupons de paris que votre assistant pourra partager avec vos clients.
                       </p>
                       <div className="text-xs text-muted-foreground">
-                        12 coupons actifs • Dernier ajout il y a 2 jours
+                        {formatCardFooterText("coupon", dashboardData?.coupons, isLoadingDashboardData)}
                       </div>
                     </div>
                   </DashboardCard>
@@ -103,7 +170,7 @@ const Index = () => {
                         Créez des procédures étape par étape que votre assistant utilisera pour guider vos clients.
                       </p>
                       <div className="text-xs text-muted-foreground">
-                        8 procédures • Dernière mise à jour il y a 3 jours
+                        {formatCardFooterText("procédure", dashboardData?.procedures, isLoadingDashboardData)}
                       </div>
                     </div>
                   </DashboardCard>
@@ -119,7 +186,7 @@ const Index = () => {
                         Recensez les problèmes fréquents et leurs solutions pour que votre assistant puisse aider efficacement.
                       </p>
                       <div className="text-xs text-muted-foreground">
-                        15 problèmes répertoriés • 3 ajouts récents
+                        {formatCardFooterText("problème", dashboardData?.problems, isLoadingDashboardData)}
                       </div>
                     </div>
                   </DashboardCard>
@@ -135,7 +202,7 @@ const Index = () => {
                         Ajoutez des informations supplémentaires comme des codes promos, liens et exemples de conversations.
                       </p>
                       <div className="text-xs text-muted-foreground">
-                        6 infos • Dernière mise à jour hier
+                        {formatCardFooterText("info", dashboardData?.botInfo, isLoadingDashboardData)}
                       </div>
                     </div>
                   </DashboardCard>
