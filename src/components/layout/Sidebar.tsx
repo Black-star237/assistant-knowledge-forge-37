@@ -21,7 +21,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export const AppSidebar = () => {
   const { open: isOpen } = useSidebar();
-  const { user, userData } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -45,7 +45,7 @@ export const AppSidebar = () => {
   return (
     <Sidebar
       className={isOpen ? 'w-60' : 'w-16'}
-      collapsible
+      collapsible="icon"
     >
       <SidebarTrigger className="m-2 self-end" />
 
@@ -53,18 +53,14 @@ export const AppSidebar = () => {
       <div className={`p-4 ${isOpen ? 'items-start' : 'items-center'} flex flex-col mb-2`}>
         <div className={`flex ${isOpen ? 'flex-row items-center w-full gap-4' : 'flex-col'}`}>
           <Avatar className="h-10 w-10">
-            {userData?.['Photo de profile'] ? (
-              <AvatarImage src={userData['Photo de profile']} alt="Avatar" />
-            ) : (
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {user?.email?.substring(0, 2).toUpperCase() || 'U'}
-              </AvatarFallback>
-            )}
+            <AvatarFallback className="bg-primary text-primary-foreground">
+              {user?.email?.substring(0, 2).toUpperCase() || 'U'}
+            </AvatarFallback>
           </Avatar>
 
           {isOpen && (
             <div className="flex flex-col">
-              <span className="text-sm font-medium">{userData?.nom || user?.email}</span>
+              <span className="text-sm font-medium">{user?.email}</span>
               <Button variant="link" asChild className="h-auto p-0 text-xs text-muted-foreground">
                 <NavLink to="/profile">Mon profil</NavLink>
               </Button>
