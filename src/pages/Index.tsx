@@ -1,3 +1,4 @@
+
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { StatsOverview } from "@/components/dashboard/StatsOverview";
@@ -12,7 +13,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 // Define a type for valid table names we are querying
-type ValidTableName = Extract<keyof Database['public']['Tables'], 'coupons' | 'procédures' | 'problèmes_et_solutions' | 'informations_bot'>;
+type ValidTableName = Extract<keyof Database['public']['Tables'], 'coupons' | 'procedures' | 'problemes_et_solutions' | 'informations_bot'>;
 
 interface StatSummary {
   count: number;
@@ -72,8 +73,8 @@ const Index = () => {
       // Ensure table names match ValidTableName types
       const [coupons, procedures, problems, botInfo] = await Promise.all([
         fetchStatSummary('coupons'),
-        fetchStatSummary('procédures'), 
-        fetchStatSummary('problèmes_et_solutions'),
+        fetchStatSummary('procedures'), 
+        fetchStatSummary('problemes_et_solutions'),
         fetchStatSummary('informations_bot'),
       ]);
       return { coupons, procedures, problems, botInfo };

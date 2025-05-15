@@ -72,11 +72,11 @@ const Problems = () => {
   const [activeCategory, setActiveCategory] = useState("all");
 
   // Fetch problems with React Query
-  const { data: problemsData = [], isLoading } = useQuery<Tables<'problèmes_et_solutions'>[], Error>({
+  const { data: problemsData = [], isLoading } = useQuery({
     queryKey: ['problems'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('problèmes_et_solutions')
+        .from('problemes_et_solutions')
         .select('*')
         .order('created_at', { ascending: false });
       
@@ -86,7 +86,7 @@ const Problems = () => {
   });
 
   // Convert DB data (Tables<'problèmes_et_solutions'>) to our display format (ProblemDisplay)
-  const problems: ProblemDisplay[] = problemsData.map((item: Tables<'problèmes_et_solutions'>) => {
+  const problems: ProblemDisplay[] = problemsData.map((item) => {
     // Use 'titre' if available, otherwise derive from 'Description'
     const title = item.titre || (item.Description || "Problème sans titre").split('\n')[0].substring(0, 50);
     
@@ -105,7 +105,7 @@ const Problems = () => {
   type ProblemMutationVariables = z.infer<typeof formSchema> & { userId?: string };
 
   // Add or update problem mutation
-  const mutation = useMutation<void, Error, ProblemMutationVariables>({
+  const mutation = useMutation({
     mutationFn: async (values: ProblemMutationVariables) => {
       if (!user && !values.userId) {
         throw new Error("Utilisateur non authentifié ou ID utilisateur manquant.");
@@ -121,27 +121,26 @@ const Problems = () => {
         Solutions: values.solution,
         tags: values.tags,
         category: values.category,
-        // user_id is not in form, Supabase RLS should handle user association if needed or it's implicit
+        user_profile: currentUserId // Automatically set the user_profile field with current user ID
       };
 
       if (editingProblem) {
-        const updatePayload: TablesUpdate<'problèmes_et_solutions'> = {
+        const updatePayload: TablesUpdate<'problemes_et_solutions'> = {
             ...dbPayload,
             // user_profile should not be updated generally
         };
         const { error } = await supabase
-          .from('problèmes_et_solutions')
+          .from('problemes_et_solutions')
           .update(updatePayload)
           .eq('id', editingProblem.id);
           
         if (error) throw error;
       } else {
-        const insertPayload: TablesInsert<'problèmes_et_solutions'> = {
+        const insertPayload: TablesInsert<'problemes_et_solutions'> = {
             ...dbPayload,
-            user_profile: currentUserId,
         };
         const { error } = await supabase
-          .from('problèmes_et_solutions')
+          .from('problemes_et_solutions')
           .insert(insertPayload);
           
         if (error) throw error;
@@ -169,10 +168,10 @@ const Problems = () => {
   });
 
   // Delete problem mutation
-  const deleteMutation = useMutation<void, Error, number>({
+  const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       const { error } = await supabase
-        .from('problèmes_et_solutions')
+        .from('problemes_et_solutions')
         .delete()
         .eq('id', id);
         
