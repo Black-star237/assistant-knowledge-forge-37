@@ -14,6 +14,7 @@ export type Database = {
           contenu: string | null
           created_at: string
           id: number
+          id_vector: number | null
           titre: string | null
           user_profile: string | null
         }
@@ -21,6 +22,7 @@ export type Database = {
           contenu?: string | null
           created_at?: string
           id?: number
+          id_vector?: number | null
           titre?: string | null
           user_profile?: string | null
         }
@@ -28,10 +30,18 @@ export type Database = {
           contenu?: string | null
           created_at?: string
           id?: number
+          id_vector?: number | null
           titre?: string | null
           user_profile?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "code_promo_id_vector_fkey"
+            columns: ["id_vector"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "code_promo_user_profile_fkey"
             columns: ["user_profile"]
@@ -49,6 +59,7 @@ export type Database = {
           "description visuelle": string | null
           Heure: string | null
           id: number
+          id_vector: number | null
           image_url: string | null
           jour: string | null
           odds: string | null
@@ -61,6 +72,7 @@ export type Database = {
           "description visuelle"?: string | null
           Heure?: string | null
           id?: number
+          id_vector?: number | null
           image_url?: string | null
           jour?: string | null
           odds?: string | null
@@ -73,12 +85,20 @@ export type Database = {
           "description visuelle"?: string | null
           Heure?: string | null
           id?: number
+          id_vector?: number | null
           image_url?: string | null
           jour?: string | null
           odds?: string | null
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "coupons_id_vector_fkey"
+            columns: ["id_vector"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "Coupons_user_id_fkey"
             columns: ["user_id"]
@@ -114,6 +134,7 @@ export type Database = {
           created_at: string
           discussion: string | null
           id: number
+          id_vector: number | null
           titre: string | null
           user_profile: string | null
         }
@@ -121,6 +142,7 @@ export type Database = {
           created_at?: string
           discussion?: string | null
           id?: number
+          id_vector?: number | null
           titre?: string | null
           user_profile?: string | null
         }
@@ -128,10 +150,18 @@ export type Database = {
           created_at?: string
           discussion?: string | null
           id?: number
+          id_vector?: number | null
           titre?: string | null
           user_profile?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "exemples_de_discussions_id_vector_fkey"
+            columns: ["id_vector"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "exemples_de_discussions_user_profile_fkey"
             columns: ["user_profile"]
@@ -184,6 +214,7 @@ export type Database = {
           contenu: string | null
           created_at: string
           id: number
+          id_vector: number | null
           titre: string | null
           user_profile: string
         }
@@ -191,6 +222,7 @@ export type Database = {
           contenu?: string | null
           created_at?: string
           id?: number
+          id_vector?: number | null
           titre?: string | null
           user_profile: string
         }
@@ -198,10 +230,18 @@ export type Database = {
           contenu?: string | null
           created_at?: string
           id?: number
+          id_vector?: number | null
           titre?: string | null
           user_profile?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "liens_utiles_id_vector_fkey"
+            columns: ["id_vector"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "liens_utiles_user_profile_fkey"
             columns: ["user_profile"]
@@ -211,12 +251,13 @@ export type Database = {
           },
         ]
       }
-      problèmes_et_solutions: {
+      problemes_et_solutions: {
         Row: {
           category: string | null
           created_at: string
           Description: string | null
           id: number
+          id_vector: number | null
           Solutions: string | null
           tags: string | null
           titre: string | null
@@ -227,6 +268,7 @@ export type Database = {
           created_at?: string
           Description?: string | null
           id?: number
+          id_vector?: number | null
           Solutions?: string | null
           tags?: string | null
           titre?: string | null
@@ -237,12 +279,20 @@ export type Database = {
           created_at?: string
           Description?: string | null
           id?: number
+          id_vector?: number | null
           Solutions?: string | null
           tags?: string | null
           titre?: string | null
           user_profile?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "problemes_et_solutions_id_vector_fkey"
+            columns: ["id_vector"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "problèmes_et_solutions_user_profile_fkey"
             columns: ["user_profile"]
@@ -252,12 +302,13 @@ export type Database = {
           },
         ]
       }
-      procédures: {
+      procedures: {
         Row: {
           created_at: string
           description: string | null
           etapes_procedure: string | null
           id: number
+          id_vector: number | null
           Titre_procedure: string | null
           user_id: string | null
         }
@@ -266,6 +317,7 @@ export type Database = {
           description?: string | null
           etapes_procedure?: string | null
           id?: number
+          id_vector?: number | null
           Titre_procedure?: string | null
           user_id?: string | null
         }
@@ -274,10 +326,18 @@ export type Database = {
           description?: string | null
           etapes_procedure?: string | null
           id?: number
+          id_vector?: number | null
           Titre_procedure?: string | null
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "procedures_id_vector_fkey"
+            columns: ["id_vector"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "Procédures_user_id_fkey"
             columns: ["user_id"]
@@ -292,6 +352,7 @@ export type Database = {
           contenu: string | null
           created_at: string
           id: number
+          id_vector: number | null
           titre: string | null
           user_profile: string | null
         }
@@ -299,6 +360,7 @@ export type Database = {
           contenu?: string | null
           created_at?: string
           id?: number
+          id_vector?: number | null
           titre?: string | null
           user_profile?: string | null
         }
@@ -306,10 +368,18 @@ export type Database = {
           contenu?: string | null
           created_at?: string
           id?: number
+          id_vector?: number | null
           titre?: string | null
           user_profile?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "regles_id_vector_fkey"
+            columns: ["id_vector"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "regles_user_profile_fkey"
             columns: ["user_profile"]

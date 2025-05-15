@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 export function AppSidebar() {
   const location = useLocation();
   const { user, signOut, loading } = useAuth();
-  const { isOpen, isMobile, toggleSidebar } = useSidebar();
+  const { open: isOpen, isMobile, toggleSidebar } = useSidebar();
 
   const navItems = [
     { href: "/", label: "Tableau de bord", icon: Home },
@@ -91,7 +91,7 @@ export function AppSidebar() {
            {user && isOpen && (
             <div className="flex items-center gap-3 p-2 border-t">
               <Avatar className="h-9 w-9">
-                 <AvatarImage src={user.user_metadata?.avatar_url || profile?.["Photo de profile"] || undefined} alt={user.email || "Utilisateur"} />
+                 <AvatarImage src={user.user_metadata?.avatar_url || user.user_metadata?.["Photo de profile"] || undefined} alt={user.email || "Utilisateur"} />
                 <AvatarFallback>{userInitial}</AvatarFallback>
               </Avatar>
               <div className="grid gap-0.5 text-xs">
