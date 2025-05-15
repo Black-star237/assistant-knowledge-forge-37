@@ -1,124 +1,108 @@
 
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Home, FileText, AlertTriangle, Info, Settings, LogOut, UserCircle } from "lucide-react"; // Added UserCircle
-import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useSidebar } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import React from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar
+} from '@/components/ui/sidebar';
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Home, Bookmark, FileText, HelpCircle, Info, User, PhoneCall } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
-export function AppSidebar() {
+export const AppSidebar = () => {
+  const { open: isOpen } = useSidebar();
+  const { user, userData } = useAuth();
   const location = useLocation();
-  const { user, signOut, loading } = useAuth();
-  const { open: isOpen, isMobile, toggleSidebar } = useSidebar();
+  const currentPath = location.pathname;
 
-  const navItems = [
-    { href: "/", label: "Tableau de bord", icon: Home },
-    { href: "/coupons", label: "Coupons", icon: FileText },
-    { href: "/procedures", label: "Procédures", icon: FileText },
-    { href: "/problems", label: "Problèmes & Solutions", icon: AlertTriangle },
-    { href: "/bot-info", label: "Informations du Bot", icon: Info },
-    { href: "/profile", label: "Mon Profil", icon: UserCircle }, // ADDED PROFILE LINK
+  // Items de la sidebar
+  const mainItems = [
+    { title: 'Tableau de bord', url: '/', icon: Home },
+    { title: 'Coupons', url: '/coupons', icon: Bookmark },
+    { title: 'Procédures', url: '/procedures', icon: FileText },
+    { title: 'Problèmes & Solutions', url: '/problems', icon: HelpCircle },
+    { title: 'Informations Bot', url: '/bot-info', icon: Info },
+    { title: 'Licence WhatsApp', url: '/licence-whatsapp', icon: PhoneCall }, // Nouvel élément
   ];
 
-  const isActive = (path: string) => location.pathname === path;
-
-  if (loading) {
-    return (
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-10 flex-col border-r bg-background sm:flex",
-          isOpen ? "flex w-72" : "hidden w-20"
-        )}
-      >
-        <div className="flex h-full max-h-screen flex-col gap-2 p-4">
-          <div className="flex h-14 items-center border-b">
-            <Link to="/" className="flex items-center gap-2 font-semibold">
-              {/* Placeholder for logo or app name */}
-            </Link>
-          </div>
-          <div className="flex-1 overflow-auto py-2">
-            {/* Skeleton loading for nav items can be added here */}
-          </div>
-        </div>
-      </aside>
-    );
-  }
-  
-  const userInitial = user?.email?.charAt(0).toUpperCase() || "U";
+  // Classe active pour NavLink
+  const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
+    `w-full flex items-center gap-2 px-2 py-2 rounded-md ${isActive
+      ? 'bg-muted text-primary font-medium'
+      : 'hover:bg-muted/50 text-muted-foreground'
+    }`;
 
   return (
-    <aside
-      className={cn(
-        "fixed inset-y-0 left-0 z-10 flex-col border-r bg-background sm:flex",
-        isMobile ? (isOpen ? "flex w-72" : "hidden") : (isOpen ? "flex w-72" : "w-20")
-      )}
+    <Sidebar
+      className={isOpen ? 'w-60' : 'w-16'}
+      collapsible
     >
-      <div className="flex h-full max-h-screen flex-col gap-2 p-4">
-        <div className={cn("flex h-14 items-center border-b", isOpen ? "px-4" : "justify-center")}>
-          <Link to="/" className="flex items-center gap-2 font-semibold">
-            <img src="/logo.svg" alt="Logo" className="h-6 w-6" />
-            {isOpen && <span className="">Mon Assistant</span>}
-          </Link>
-        </div>
+      <SidebarTrigger className="m-2 self-end" />
 
-        <nav className="flex-1 overflow-auto py-2 space-y-1">
-          {navItems.map((item) => (
-            <Tooltip key={item.href}>
-              <TooltipTrigger asChild>
-                <Link
-                  to={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                    isActive(item.href) && "bg-muted text-primary",
-                    !isOpen && "justify-center"
-                  )}
-                  onClick={isMobile ? toggleSidebar : undefined}
-                >
-                  <item.icon className="h-5 w-5" />
-                  {isOpen && item.label}
-                </Link>
-              </TooltipTrigger>
-              {!isOpen && <TooltipContent side="right">{item.label}</TooltipContent>}
-            </Tooltip>
-          ))}
-        </nav>
+      {/* Avatar utilisateur */}
+      <div className={`p-4 ${isOpen ? 'items-start' : 'items-center'} flex flex-col mb-2`}>
+        <div className={`flex ${isOpen ? 'flex-row items-center w-full gap-4' : 'flex-col'}`}>
+          <Avatar className="h-10 w-10">
+            {userData?.['Photo de profile'] ? (
+              <AvatarImage src={userData['Photo de profile']} alt="Avatar" />
+            ) : (
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {user?.email?.substring(0, 2).toUpperCase() || 'U'}
+              </AvatarFallback>
+            )}
+          </Avatar>
 
-        <div className="mt-auto space-y-2">
-           {user && isOpen && (
-            <div className="flex items-center gap-3 p-2 border-t">
-              <Avatar className="h-9 w-9">
-                 <AvatarImage src={user.user_metadata?.avatar_url || user.user_metadata?.["Photo de profile"] || undefined} alt={user.email || "Utilisateur"} />
-                <AvatarFallback>{userInitial}</AvatarFallback>
-              </Avatar>
-              <div className="grid gap-0.5 text-xs">
-                <div className="font-medium truncate">{user.user_metadata?.full_name || user.email}</div>
-                <div className="text-muted-foreground">Admin</div> {/* Or user role */}
-              </div>
+          {isOpen && (
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">{userData?.nom || user?.email}</span>
+              <Button variant="link" asChild className="h-auto p-0 text-xs text-muted-foreground">
+                <NavLink to="/profile">Mon profil</NavLink>
+              </Button>
             </div>
           )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size={isOpen ? "default" : "icon"}
-                className={cn(
-                  "w-full flex items-center gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary",
-                  !isOpen && "justify-center"
-                )}
-                onClick={signOut}
-              >
-                <LogOut className="h-5 w-5" />
-                {isOpen && "Déconnexion"}
-              </Button>
-            </TooltipTrigger>
-            {!isOpen && <TooltipContent side="right">Déconnexion</TooltipContent>}
-          </Tooltip>
         </div>
       </div>
-    </aside>
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {mainItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink to={item.url} className={getNavLinkClass} end>
+                      <item.icon className="h-5 w-5" />
+                      {isOpen && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      {/* Lien profil (visible uniquement en mode collapsed) */}
+      {!isOpen && (
+        <div className="mt-auto p-2 mb-2">
+          <SidebarMenuButton asChild>
+            <NavLink to="/profile" className={getNavLinkClass}>
+              <User className="h-5 w-5" />
+            </NavLink>
+          </SidebarMenuButton>
+        </div>
+      )}
+    </Sidebar>
   );
-}
+};

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -12,7 +13,8 @@ import Problems from "./pages/Problems";
 import BotInfo from "./pages/BotInfo";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-import ProfilePage from "./pages/Profile"; // Add ProfilePage import
+import ProfilePage from "./pages/Profile"; 
+import LicenceWhatsapp from "./pages/LicenceWhatsapp"; // Ajout de la nouvelle page
 
 const queryClient = new QueryClient();
 
@@ -30,7 +32,8 @@ const App = () => (
             <Route path="/procedures" element={<Procedures />} />
             <Route path="/problems" element={<Problems />} />
             <Route path="/bot-info" element={<BotInfo />} />
-            <Route path="/profile" element={<ProfilePage />} /> {/* ADDED PROFILE ROUTE */}
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/licence-whatsapp" element={<LicenceWhatsapp />} /> {/* AJOUT DE LA NOUVELLE ROUTE */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

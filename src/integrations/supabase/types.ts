@@ -209,6 +209,54 @@ export type Database = {
           },
         ]
       }
+      "Licences Whatsapp": {
+        Row: {
+          created_at: string
+          id: number
+          id_user: string | null
+          id_WaAPI: string | null
+          id_Workflow: string | null
+          n8n_connected: boolean | null
+          Nom: string | null
+          statu: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          id_user?: string | null
+          id_WaAPI?: string | null
+          id_Workflow?: string | null
+          n8n_connected?: boolean | null
+          Nom?: string | null
+          statu?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          id_user?: string | null
+          id_WaAPI?: string | null
+          id_Workflow?: string | null
+          n8n_connected?: boolean | null
+          Nom?: string | null
+          statu?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Licences Whatsapp_id_user_fkey"
+            columns: ["id_user"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Licences Whatsapp_statu_fkey"
+            columns: ["statu"]
+            isOneToOne: false
+            referencedRelation: "status"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       liens_utiles: {
         Row: {
           contenu: string | null
@@ -389,33 +437,57 @@ export type Database = {
           },
         ]
       }
+      status: {
+        Row: {
+          created_at: string
+          id: number
+          nom: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          nom?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          nom?: string | null
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           created_at: string | null
+          durée_souscription: number | null
           id: string
           nom: string | null
           "Numero whatsapp Bot": string | null
           "Numero Whatsapp perso": string | null
           Offre: string | null
           "Photo de profile": string | null
+          solvable: boolean | null
         }
         Insert: {
           created_at?: string | null
+          durée_souscription?: number | null
           id: string
           nom?: string | null
           "Numero whatsapp Bot"?: string | null
           "Numero Whatsapp perso"?: string | null
           Offre?: string | null
           "Photo de profile"?: string | null
+          solvable?: boolean | null
         }
         Update: {
           created_at?: string | null
+          durée_souscription?: number | null
           id?: string
           nom?: string | null
           "Numero whatsapp Bot"?: string | null
           "Numero Whatsapp perso"?: string | null
           Offre?: string | null
           "Photo de profile"?: string | null
+          solvable?: boolean | null
         }
         Relationships: []
       }
