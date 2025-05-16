@@ -44,7 +44,7 @@ export const AppSidebar = () => {
 
   return (
     <Sidebar
-      className={`glassmorphism ${isOpen ? 'w-64' : 'w-16'} border-r border-white/20`}
+      className="glassmorphism border-r border-white/20"
       collapsible="icon"
     >
       <SidebarTrigger className="m-2 self-end text-sidebar-foreground/80 hover:text-sidebar-foreground" />
