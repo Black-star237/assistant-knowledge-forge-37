@@ -11,22 +11,49 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Loader2, Check, X, RefreshCw, Link as LinkIcon, Unlink, Plus } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/context/AuthContext";
 
 const LicenceWhatsapp = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [connectionMethod, setConnectionMethod] = useState<"qr" | "code" | null>(null);
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [connectionCode, setConnectionCode] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  // Fetch user profile to check if solvable
+  const { data: userProfile, isLoading: isUserProfileLoading } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("user_profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching user profile:", error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
   // Fetch license data
   const { data: licenceData, isLoading: isLicenceLoading, refetch } = useQuery({
-    queryKey: ["licenceWhatsapp"],
+    queryKey: ["licenceWhatsapp", user?.id],
     queryFn: async () => {
+      if (!user?.id) return null;
       const { data, error } = await supabase
         .from("Licences Whatsapp")
         .select("*")
+        .eq("id_user", user.id)
         .limit(1);
 
       if (error) {
@@ -41,6 +68,7 @@ const LicenceWhatsapp = () => {
 
       return data.length > 0 ? data[0] : null;
     },
+    enabled: !!user?.id,
   });
 
   // Handle connection to WhatsApp
@@ -122,14 +150,93 @@ const LicenceWhatsapp = () => {
     }
   };
 
-  // Handle purchase of a new license
-  const handlePurchase = () => {
-    // In a real implementation, redirect to purchase page or open payment dialog
-    toast({
-      title: "Acheter une licence",
-      description: "Redirection vers la page d'achat...",
-    });
+  // Handle purchase Lygos payment gateway
+  const handlePurchase = async () => {
+    setIsLoading(true);
+
+    try {
+      // Generate unique ID for order
+      const orderId = `order_${Math.random().toString(36).substring(2, 15)}`;
+      
+      // Call Lygos API to create payment gateway
+      const response = await fetch("https://api.lygosapp.com/v1/gateway", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": "lygosapp-1b0aabd2-e115-4224-bc8f-254d355d62a4"
+        },
+        body: JSON.stringify({
+          amount: 20600,
+          shop_name: "bot whatsapp",
+          message: "Achat d'une licence WhatsApp",
+          success_url: window.location.origin + "/licence-whatsapp?success=true",
+          failure_url: window.location.origin + "/licence-whatsapp?failure=true",
+          order_id: orderId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Erreur lors de la création de la passerelle de paiement");
+      }
+
+      // Get the payment URL from the response
+      const data = await response.json();
+      
+      // Redirect to payment page
+      window.location.href = data.payment_url;
+
+    } catch (error) {
+      console.error("Error purchasing:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur d'achat",
+        description: "Une erreur est survenue lors de la création du paiement",
+      });
+      setIsLoading(false);
+    }
   };
+
+  // Check for payment success or failure from URL params
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const failure = urlParams.get('failure');
+
+    if (success === 'true' && user?.id) {
+      // Update user to solvable
+      supabase
+        .from("user_profiles")
+        .update({ solvable: true })
+        .eq("id", user.id)
+        .then(({ error }) => {
+          if (error) {
+            console.error("Error updating user profile:", error);
+            toast({
+              variant: "destructive",
+              title: "Erreur",
+              description: "Impossible de mettre à jour votre profil"
+            });
+          } else {
+            toast({
+              title: "Paiement réussi",
+              description: "Votre licence WhatsApp sera disponible sous peu"
+            });
+          }
+        });
+      
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (failure === 'true') {
+      toast({
+        variant: "destructive",
+        title: "Paiement échoué",
+        description: "Le paiement n'a pas pu être traité. Veuillez réessayer."
+      });
+      
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [toast, user]);
 
   const getStatusComponent = () => {
     if (licenceData?.n8n_connected) {
@@ -149,6 +256,9 @@ const LicenceWhatsapp = () => {
     }
   };
 
+  const isUserWaiting = userProfile?.solvable && !licenceData;
+  const isLoadingData = isUserProfileLoading || isLicenceLoading;
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -164,10 +274,42 @@ const LicenceWhatsapp = () => {
                 </p>
               </div>
 
-              {isLicenceLoading ? (
+              {isLoadingData ? (
                 <div className="flex justify-center items-center h-64">
                   <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
+              ) : isUserWaiting ? (
+                <Card className="w-full max-w-3xl mx-auto">
+                  <CardHeader>
+                    <CardTitle className="text-xl">Mise en place de votre assistant</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="bg-orange-50 border-l-4 border-orange-400 p-4 rounded-md">
+                      <p className="text-orange-700">
+                        <strong>Votre assistant est en cours de création.</strong> Ce processus peut prendre jusqu'à une heure maximum.
+                      </p>
+                      <p className="text-orange-700 mt-2">
+                        Vous pouvez continuer à modifier les informations de votre assistant en attendant. Nous vous informerons dès que votre assistant sera prêt.
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>Progression</span>
+                        <span>En cours...</span>
+                      </div>
+                      <Progress value={33} className="h-2" />
+                    </div>
+                    
+                    <div className="flex items-center space-x-4 pt-4">
+                      <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
+                      <div>
+                        <p className="font-medium">Votre licence WhatsApp est en cours de préparation</p>
+                        <p className="text-sm text-muted-foreground">Veuillez patienter, cela ne prendra pas longtemps.</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               ) : licenceData ? (
                 <Card className="w-full max-w-3xl mx-auto">
                   <CardHeader>
@@ -288,9 +430,18 @@ const LicenceWhatsapp = () => {
                     </p>
                   </CardContent>
                   <CardFooter className="justify-center">
-                    <Button onClick={handlePurchase}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Acheter une licence
+                    <Button onClick={handlePurchase} disabled={isLoading}>
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Traitement en cours...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Acheter une licence
+                        </>
+                      )}
                     </Button>
                   </CardFooter>
                 </Card>
