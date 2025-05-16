@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -75,12 +74,31 @@ export default {
 					light: '#6366F1',
 					DEFAULT: '#4F46E5',
 					dark: '#4338CA',
+				},
+				jovial: {
+					blue: {
+						light: '#E6F4FF',
+						DEFAULT: '#0EA5E9',
+						dark: '#0369A1',
+					},
+					green: {
+						light: '#ECFDF5',
+						DEFAULT: '#10B981',
+						dark: '#047857',
+					},
+					orange: {
+						light: '#FFF7ED',
+						DEFAULT: '#F97316',
+						dark: '#C2410C',
+					}
 				}
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+				sm: 'calc(var(--radius) - 4px)',
+				xl: '1rem',
+				'2xl': '1.5rem',
 			},
 			keyframes: {
 				'accordion-down': {
@@ -108,6 +126,10 @@ export default {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
+			},
+			boxShadow: {
+				'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
+				'card': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
 			}
 		}
 	},

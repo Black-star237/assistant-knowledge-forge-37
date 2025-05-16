@@ -218,7 +218,7 @@ export type Database = {
           id_Workflow: string | null
           n8n_connected: boolean | null
           Nom: string | null
-          statu: number | null
+          statu: string | null
         }
         Insert: {
           created_at?: string
@@ -228,7 +228,7 @@ export type Database = {
           id_Workflow?: string | null
           n8n_connected?: boolean | null
           Nom?: string | null
-          statu?: number | null
+          statu?: string | null
         }
         Update: {
           created_at?: string
@@ -238,7 +238,7 @@ export type Database = {
           id_Workflow?: string | null
           n8n_connected?: boolean | null
           Nom?: string | null
-          statu?: number | null
+          statu?: string | null
         }
         Relationships: [
           {
@@ -253,7 +253,7 @@ export type Database = {
             columns: ["statu"]
             isOneToOne: false
             referencedRelation: "status"
-            referencedColumns: ["id"]
+            referencedColumns: ["nom"]
           },
         ]
       }
