@@ -23,6 +23,21 @@ interface Coupon {
   created_at: string;
 }
 
+// Interface pour les données provenant de Supabase
+interface SupabaseCoupon {
+  id: number;
+  "description visuelle": string;
+  Heure: string;
+  jour: string;
+  code_du_coupon: string;
+  commentaire: string;
+  image_url: string;
+  created_at: string;
+  user_id: string;
+  id_vector: number;
+  odds: string;
+}
+
 const Coupons = () => {
   const [isAddingCoupon, setIsAddingCoupon] = useState(false);
   const [newCoupon, setNewCoupon] = useState({
@@ -34,7 +49,7 @@ const Coupons = () => {
   });
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data: coupons, isLoading, refetch } = useQuery({
+  const { data: couponsData, isLoading, refetch } = useQuery({
     queryKey: ['coupons'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -43,9 +58,20 @@ const Coupons = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw new Error(error.message);
-      return data as Coupon[];
+      return data as SupabaseCoupon[];
     }
   });
+  
+  // Mapper les données de Supabase au format de notre interface Coupon
+  const coupons: Coupon[] = couponsData?.map((coupon) => ({
+    id: coupon.id,
+    title: coupon.code_du_coupon || '',
+    description: coupon.commentaire || coupon["description visuelle"] || '',
+    image_url: coupon.image_url,
+    date_utilisation: coupon.jour || '',
+    heure_utilisation: coupon.Heure || '',
+    created_at: coupon.created_at
+  })) || [];
 
   const handleImageUpload = async (file: File) => {
     if (!file) return;
@@ -81,7 +107,15 @@ const Coupons = () => {
     
     const { error } = await supabase
       .from('coupons')
-      .insert([newCoupon]);
+      .insert([
+        {
+          code_du_coupon: newCoupon.title,
+          commentaire: newCoupon.description,
+          image_url: newCoupon.image_url,
+          jour: newCoupon.date_utilisation,
+          Heure: newCoupon.heure_utilisation
+        }
+      ]);
     
     if (error) {
       console.error('Error adding coupon:', error);
@@ -163,7 +197,7 @@ const Coupons = () => {
                             </div>
                           ) : (
                             <div className="w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center text-muted-foreground">
-                              <ImagePicker onImageSelected={handleImageUpload}>
+                              <ImagePicker onImageSelect={handleImageUpload} isUploading={false}>
                                 <div className="flex flex-col items-center cursor-pointer">
                                   <Image className="h-8 w-8 mb-1" />
                                   <span className="text-xs">Ajouter</span>
@@ -271,9 +305,9 @@ const Coupons = () => {
                             <div className="w-full flex justify-between items-center">
                               <div className="flex items-center text-xs text-muted-foreground">
                                 <Calendar className="h-3 w-3 mr-1" />
-                                {format(new Date(coupon.date_utilisation), 'dd MMM yyyy', { locale: fr })}
+                                {coupon.date_utilisation ? format(new Date(coupon.date_utilisation), 'dd MMM yyyy', { locale: fr }) : 'Non définie'}
                                 <Clock className="h-3 w-3 ml-3 mr-1" />
-                                {coupon.heure_utilisation}
+                                {coupon.heure_utilisation || 'Non définie'}
                               </div>
                               <Button variant="ghost" size="sm">Modifier</Button>
                             </div>

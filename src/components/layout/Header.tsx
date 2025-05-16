@@ -59,7 +59,7 @@ export function Header() {
           </Button>
 
           <Button
-            variant="primary"
+            variant="default"
             size="sm"
             className="rounded-full bg-primary text-white hidden sm:flex"
           >
