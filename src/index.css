@@ -14,16 +14,16 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 204 80% 50%;
+    --primary: 196 83% 50%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 152 76% 40%;
+    --secondary: 199 89% 48%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 152 76% 40%;
+    --accent: 213 94% 68%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
@@ -33,11 +33,11 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 204 80% 50%;
 
-    --radius: 0.8rem;
+    --radius: 1rem;
 
-    --sidebar-background: 0 0% 100% / 0.65;
+    --sidebar-background: 0 0% 100% / 0.75;
     --sidebar-foreground: 222.2 84% 4.9%;
-    --sidebar-primary: 204 80% 50%;
+    --sidebar-primary: 196 83% 50%;
     --sidebar-primary-foreground: 210 40% 98%;
     --sidebar-accent: 204 80% 96%;
     --sidebar-accent-foreground: 222.2 47.4% 11.2%;
@@ -55,16 +55,16 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 204 80% 50%;
+    --primary: 196 83% 50%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 152 76% 35%;
+    --secondary: 199 89% 48%;
     --secondary-foreground: 210 40% 98%;
 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 152 76% 35%;
+    --accent: 213 94% 68%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
@@ -76,7 +76,7 @@
 
     --sidebar-background: 222.2 84% 4.9% / 0.75;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 204 80% 50%;
+    --sidebar-primary: 196 83% 50%;
     --sidebar-primary-foreground: 210 40% 98%;
     --sidebar-accent: 217.2 32.6% 12%;
     --sidebar-accent-foreground: 210 40% 98%;
@@ -96,7 +96,7 @@
 
 @layer utilities {
   .gradient-card {
-    @apply bg-gradient-to-br from-white to-muted shadow-card;
+    @apply bg-white shadow-card rounded-xl;
   }
   
   .whatsapp-gradient {
@@ -108,11 +108,47 @@
   }
   
   .glassmorphism {
-    @apply backdrop-blur-md bg-white/60 dark:bg-black/40 border border-white/20 dark:border-white/10;
+    @apply backdrop-blur-md bg-white/80 dark:bg-black/40 border border-white/40 dark:border-white/10 shadow-lg;
+  }
+
+  .icon-circle {
+    @apply flex items-center justify-center w-12 h-12 rounded-full;
+  }
+  
+  .icon-circle-pink {
+    @apply icon-circle bg-pink-500 text-white;
+  }
+  
+  .icon-circle-teal {
+    @apply icon-circle bg-teal-500 text-white;
+  }
+  
+  .icon-circle-blue {
+    @apply icon-circle bg-blue-500 text-white;
+  }
+  
+  .icon-circle-orange {
+    @apply icon-circle bg-orange-500 text-white;
+  }
+  
+  .icon-circle-purple {
+    @apply icon-circle bg-purple-400 text-white;
+  }
+  
+  .icon-circle-amber {
+    @apply icon-circle bg-amber-500 text-white;
+  }
+  
+  .progress-bar {
+    @apply h-1.5 rounded-full bg-gray-200;
+  }
+  
+  .progress-fill {
+    @apply h-full rounded-full;
   }
 }
 
-/* Dégradé de couleur orange pour le fond */
+/* Dégradé de couleur pour le fond */
 .mesh-bg {
   background-color: #f8fafc;
   background-image: 
@@ -127,4 +163,22 @@
     radial-gradient(at 15% 5%, hsla(24, 100%, 50%, 0.3) 0px, transparent 50%),
     radial-gradient(at 40% 30%, hsla(38, 100%, 70%, 0.2) 0px, transparent 50%),
     radial-gradient(at 0% 0%, hsla(12, 100%, 60%, 0.15) 0px, transparent 40%);
+}
+
+/* Style pour les filtres en haut */
+.filter-pill {
+  @apply px-4 py-2 rounded-full text-sm font-medium border transition-colors;
+}
+
+.filter-pill.active {
+  @apply bg-primary text-white border-primary;
+}
+
+.filter-pill:not(.active) {
+  @apply bg-white text-gray-600 border-gray-200 hover:bg-gray-50;
+}
+
+/* Style pour les cartes de contenu */
+.content-card {
+  @apply bg-white rounded-xl p-6 shadow-sm border border-gray-100 transition-shadow hover:shadow-md;
 }
