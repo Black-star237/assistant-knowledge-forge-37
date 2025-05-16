@@ -156,7 +156,7 @@ const LicenceWhatsapp = () => {
 
     try {
       // Generate unique ID for order
-      const orderId = `order_${Math.random().toString(36).substring(2, 15)}`;
+      const orderId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       
       // Call Lygos API to create payment gateway
       const response = await fetch("https://api.lygosapp.com/v1/gateway", {
@@ -169,21 +169,26 @@ const LicenceWhatsapp = () => {
           amount: 20600,
           shop_name: "bot whatsapp",
           message: "Achat d'une licence WhatsApp",
-          success_url: window.location.origin + "/licence-whatsapp?success=true",
-          failure_url: window.location.origin + "/licence-whatsapp?failure=true",
+          success_url: `${window.location.origin}/licence-whatsapp?success=true&orderId=${orderId}`,
+          failure_url: `${window.location.origin}/licence-whatsapp?failure=true&orderId=${orderId}`,
           order_id: orderId
         })
       });
 
-      if (!response.ok) {
-        throw new Error("Erreur lors de la création de la passerelle de paiement");
-      }
-
-      // Get the payment URL from the response
       const data = await response.json();
       
+      if (!response.ok) {
+        throw new Error(data.message || "Erreur lors de la création de la passerelle de paiement");
+      }
+
+      console.log("Payment gateway created:", data);
+      
       // Redirect to payment page
-      window.location.href = data.payment_url;
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+      } else {
+        throw new Error("URL de paiement non trouvée dans la réponse");
+      }
 
     } catch (error) {
       console.error("Error purchasing:", error);
@@ -201,8 +206,11 @@ const LicenceWhatsapp = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const success = urlParams.get('success');
     const failure = urlParams.get('failure');
+    const orderId = urlParams.get('orderId');
 
     if (success === 'true' && user?.id) {
+      console.log("Payment successful for order:", orderId);
+      
       // Update user to solvable
       supabase
         .from("user_profiles")
@@ -221,12 +229,16 @@ const LicenceWhatsapp = () => {
               title: "Paiement réussi",
               description: "Votre licence WhatsApp sera disponible sous peu"
             });
+            // Refetch data to update UI
+            refetch();
           }
         });
       
       // Clean URL
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (failure === 'true') {
+      console.log("Payment failed for order:", orderId);
+      
       toast({
         variant: "destructive",
         title: "Paiement échoué",
@@ -236,7 +248,7 @@ const LicenceWhatsapp = () => {
       // Clean URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, [toast, user]);
+  }, [toast, user, refetch]);
 
   const getStatusComponent = () => {
     if (licenceData?.n8n_connected) {
