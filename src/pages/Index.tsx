@@ -87,7 +87,7 @@ const Index = () => {
         <AppSidebar />
         <div className="flex flex-1 flex-col">
           <Header />
-          <main className="flex-1 overflow-auto bg-background">
+          <main className="flex-1 overflow-auto bg-background mesh-bg">
             <div className="container mx-auto p-4 sm:p-6">
               <div className="mb-8">
                 <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
@@ -102,7 +102,7 @@ const Index = () => {
               
               <section className="mb-8">
                 <h2 className="mb-4 text-xl font-semibold">Activité récente</h2>
-                <div className="rounded-xl border p-6 gradient-card">
+                <div className="rounded-xl border border-border/40 p-6 glassmorphism">
                   <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-full bg-assistant flex items-center justify-center shrink-0">
                       <MessageSquare className="h-6 w-6 text-white" />
@@ -116,26 +116,26 @@ const Index = () => {
                   </div>
                   
                   <div className="mt-6 space-y-4">
-                    <div className="grid gap-2 grid-cols-2 sm:grid-cols-2 md:grid-cols-4">
-                      <div className="flex items-center gap-2 rounded-lg border p-4 bg-background">
+                    <div className="grid gap-2 grid-cols-2 sm:grid-cols-2 md:grid-cols-4 transparent-grid">
+                      <div className="flex items-center gap-2 rounded-lg border border-border/30 p-4 bg-white/30 dark:bg-black/20 backdrop-blur-sm">
                         <div className="h-2 w-2 rounded-full bg-green-500"></div>
                         <div className="text-sm">
                           <span className="font-medium">24</span> conversations réussies
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 rounded-lg border p-4 bg-background">
+                      <div className="flex items-center gap-2 rounded-lg border border-border/30 p-4 bg-white/30 dark:bg-black/20 backdrop-blur-sm">
                         <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
                         <div className="text-sm">
                           <span className="font-medium">3</span> conversations transférées
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 rounded-lg border p-4 bg-background">
+                      <div className="flex items-center gap-2 rounded-lg border border-border/30 p-4 bg-white/30 dark:bg-black/20 backdrop-blur-sm">
                         <div className="h-2 w-2 rounded-full bg-red-500"></div>
                         <div className="text-sm">
                           <span className="font-medium">1</span> conversations échouées
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 rounded-lg border p-4 bg-background">
+                      <div className="flex items-center gap-2 rounded-lg border border-border/30 p-4 bg-white/30 dark:bg-black/20 backdrop-blur-sm">
                         <div className="h-2 w-2 rounded-full bg-blue-500"></div>
                         <div className="text-sm">
                           <span className="font-medium">5</span> nouveaux clients
@@ -148,7 +148,7 @@ const Index = () => {
 
               <section>
                 <h2 className="mb-4 text-xl font-semibold">Gestion de l'assistant</h2>
-                <div className="grid gap-4 grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-2">
+                <div className="grid gap-6 grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 transparent-grid">
                   <DashboardCard
                     title="Coupons"
                     description="Paris disponibles pour vos clients"

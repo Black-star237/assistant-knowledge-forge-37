@@ -64,7 +64,7 @@ export function DashboardCard({
 
   return (
     <Card className={cn(
-      "overflow-hidden transition-all hover:shadow-soft rounded-xl",
+      "overflow-hidden transition-all hover:shadow-soft rounded-xl bg-transparent",
       getColorClass(),
       className
     )}>
@@ -75,16 +75,16 @@ export function DashboardCard({
             <CardDescription className="text-sm">{description}</CardDescription>
           )}
         </div>
-        {icon && <div className={cn("p-2 rounded-full bg-muted/50", getIconClass())}>{icon}</div>}
+        {icon && <div className={cn("p-2 rounded-full bg-muted/30", getIconClass())}>{icon}</div>}
       </CardHeader>
       <CardContent>
         <div>{children}</div>
       </CardContent>
       {(footer || footerAction) && (
-        <CardFooter className="border-t bg-muted/30 px-6 py-3">
+        <CardFooter className="border-t border-border/30 bg-transparent px-6 py-3">
           {footer || (
             <div className="flex w-full justify-end">
-              <Button variant="ghost" size="sm" asChild className="hover:bg-background/80">
+              <Button variant="ghost" size="sm" asChild className="hover:bg-background/50">
                 <a href={footerAction?.href}>{footerAction?.label}</a>
               </Button>
             </div>
