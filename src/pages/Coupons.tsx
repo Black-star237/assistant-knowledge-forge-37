@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -30,7 +31,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Edit, Trash2, Copy, Check, Loader2 } from "lucide-react";
+import { X, Plus, Edit, Trash2, Copy, Check, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,6 +39,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const formSchema = z.object({
   title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
@@ -86,9 +89,12 @@ const Coupons = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
+  const [selectedPreviewImage, setSelectedPreviewImage] = useState<string | null>(null);
   const [editingCoupon, setEditingCoupon] = useState<CouponDisplay | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   // Fetch coupons with React Query
   const { data: couponsData = [], isLoading } = useQuery({
@@ -96,16 +102,7 @@ const Coupons = () => {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        // L'utilisateur n'est pas connecté, ne rien retourner ou gérer l'erreur
-        // Les politiques RLS empêcheront la requête si l'utilisateur n'est pas authentifié
-        // Ou si aucune politique SELECT n'est définie pour les utilisateurs non authentifiés.
-        // Dans notre cas, avec la politique "Users_can_view_their_own_coupons",
-        // la requête retournera uniquement les coupons de l'utilisateur connecté.
-        // Si aucun utilisateur n'est connecté, elle devrait retourner une table vide ou une erreur
-        // en fonction de la configuration RLS stricte.
-        // Pour être sûr, on peut vérifier `user` ici.
         console.log("Aucun utilisateur connecté, ne peut pas charger les coupons spécifiques à l'utilisateur.");
-        // throw new Error("Utilisateur non authentifié"); // Optionnel: lancer une erreur si nécessaire
       }
 
       const { data, error } = await supabase
@@ -361,6 +358,11 @@ const Coupons = () => {
     setDialogOpen(true);
   };
 
+  const openImagePreview = (imageUrl: string) => {
+    setSelectedPreviewImage(imageUrl);
+    setImagePreviewOpen(true);
+  };
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -389,17 +391,22 @@ const Coupons = () => {
               ) : (
                 <>
                   {coupons.length > 0 ? (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
                       {coupons.map((coupon) => (
-                        <Card key={coupon.id} className="overflow-hidden">
+                        <Card key={coupon.id} className="overflow-hidden flex flex-col">
                           {coupon.image_url && (
-                            <AspectRatio ratio={16 / 9} className="bg-muted">
-                              <img 
-                                src={coupon.image_url} 
-                                alt={coupon.title} 
-                                className="object-cover w-full h-full" 
-                              />
-                            </AspectRatio>
+                            <div 
+                              className="cursor-pointer" 
+                              onClick={() => openImagePreview(coupon.image_url!)}
+                            >
+                              <AspectRatio ratio={16 / 9} className="bg-muted">
+                                <img 
+                                  src={coupon.image_url} 
+                                  alt={coupon.title} 
+                                  className="object-cover w-full h-full" 
+                                />
+                              </AspectRatio>
+                            </div>
                           )}
                           <CardHeader className="pb-2">
                             <CardTitle>{coupon.title}</CardTitle>
@@ -429,7 +436,7 @@ const Coupons = () => {
                               </Button>
                             </div>
                           </CardContent>
-                          <CardFooter className="border-t bg-muted/50 px-6 py-3">
+                          <CardFooter className="border-t bg-muted/50 px-6 py-3 mt-auto">
                             <div className="flex items-center justify-between w-full text-xs text-muted-foreground">
                               <span>Créé le {new Date(coupon.created_at).toLocaleDateString()}</span>
                               <div className="flex gap-2">
@@ -486,7 +493,7 @@ const Coupons = () => {
           form.reset();
         }
       }}>
-        <DialogContent className="sm:max-w-[525px]">
+        <DialogContent className="sm:max-w-[525px] max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>
               {editingCoupon ? "Modifier le coupon" : "Ajouter un nouveau coupon"}
@@ -497,147 +504,171 @@ const Coupons = () => {
                 : "Remplissez les détails pour créer un nouveau coupon"}
             </DialogDescription>
           </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Titre</FormLabel>
-                    <FormControl>
-                      <Input placeholder="ex: Combiné Football du weekend" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <ScrollArea className="max-h-[65vh] pr-4">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Titre</FormLabel>
+                      <FormControl>
+                        <Input placeholder="ex: Combiné Football du weekend" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Décrivez les matchs ou événements inclus dans ce coupon"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Décrivez les matchs ou événements inclus dans ce coupon"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {/* Image upload */}
-              <FormItem>
-                <FormLabel>Image</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="file" 
-                    accept="image/*"
-                    // Important: ne pas utiliser form.register ici si on gère le fichier via selectedImage
-                    onChange={handleImageChange}
-                    className="cursor-pointer"
+                {/* Image upload */}
+                <FormItem>
+                  <FormLabel>Image</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="cursor-pointer"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Choisissez une image pour votre coupon (facultatif)
+                  </FormDescription>
+                  {imagePreview && (
+                    <div className="mt-2 rounded-md overflow-hidden border">
+                      <AspectRatio ratio={16 / 9}>
+                        <img 
+                          src={imagePreview} 
+                          alt="Aperçu de l'image" 
+                          className="object-cover w-full h-full" 
+                        />
+                      </AspectRatio>
+                    </div>
+                  )}
+                </FormItem>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Code</FormLabel>
+                        <FormControl>
+                          <Input placeholder="ex: FOOT-2023-1" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </FormControl>
-                <FormDescription>
-                  Choisissez une image pour votre coupon (facultatif)
-                </FormDescription>
-                {imagePreview && (
-                  <div className="mt-2 rounded-md overflow-hidden border">
-                    <AspectRatio ratio={16 / 9}>
-                      <img 
-                        src={imagePreview} 
-                        alt="Aperçu de l'image" 
-                        className="object-cover w-full h-full" 
-                      />
-                    </AspectRatio>
-                  </div>
-                )}
-              </FormItem>
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="code"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Code</FormLabel>
-                      <FormControl>
-                        <Input placeholder="ex: FOOT-2023-1" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="odds"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cote</FormLabel>
+                        <FormControl>
+                          <Input placeholder="ex: 5.75" type="number" step="0.01" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-                <FormField
-                  control={form.control}
-                  name="odds"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cote</FormLabel>
-                      <FormControl>
-                        <Input placeholder="ex: 5.75" type="number" step="0.01" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="expiryDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Date d'expiration</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="expiryDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Date d'expiration</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="expiryTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Heure d'expiration</FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-                <FormField
-                  control={form.control}
-                  name="expiryTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Heure d'expiration</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                <DialogFooter className="pt-4 pb-2">
+                  <Button 
+                    type="submit" 
+                    disabled={mutation.isPending}
+                  >
+                    {mutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Enregistrement...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="mr-2 h-4 w-4" />
+                        {editingCoupon ? "Enregistrer les modifications" : "Ajouter le coupon"}
+                      </>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
 
-              <DialogFooter>
-                <Button 
-                  type="submit" 
-                  disabled={mutation.isPending}
-                >
-                  {mutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Enregistrement...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="mr-2 h-4 w-4" />
-                      {editingCoupon ? "Enregistrer les modifications" : "Ajouter le coupon"}
-                    </>
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
+      {/* Modal de prévisualisation d'image en grand format */}
+      <Dialog open={imagePreviewOpen} onOpenChange={setImagePreviewOpen}>
+        <DialogContent className="sm:max-w-[800px] p-0 gap-0 bg-transparent border-0">
+          <div className="relative w-full">
+            <Button
+              variant="secondary"
+              size="icon"
+              className="absolute top-2 right-2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:bg-background"
+              onClick={() => setImagePreviewOpen(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            {selectedPreviewImage && (
+              <img
+                src={selectedPreviewImage}
+                alt="Aperçu du coupon"
+                className="w-full h-auto rounded-lg max-h-[80vh] object-contain"
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </SidebarProvider>

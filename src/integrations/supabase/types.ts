@@ -299,6 +299,47 @@ export type Database = {
           },
         ]
       }
+      messages_whatsapp: {
+        Row: {
+          chat_id: string
+          created_at: string
+          envoyé: boolean
+          id: number
+          id_user: string
+          message: string
+          question: string | null
+          reply_id: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          envoyé?: boolean
+          id?: number
+          id_user: string
+          message: string
+          question?: string | null
+          reply_id: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          envoyé?: boolean
+          id?: number
+          id_user?: string
+          message?: string
+          question?: string | null
+          reply_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_whatsapp_id_user_fkey"
+            columns: ["id_user"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       problemes_et_solutions: {
         Row: {
           category: string | null
