@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -111,7 +112,7 @@
   }
   
   .transparent-card {
-    @apply bg-black/30 border-transparent backdrop-blur-sm;
+    @apply bg-transparent border-transparent backdrop-blur-sm;
   }
   
   .transparent-grid {
@@ -126,4 +127,51 @@
 
 .dark .mesh-bg {
   background: linear-gradient(to bottom, rgba(255, 200, 180, 0.15) 0%, rgba(30, 30, 40, 0.95) 100%);
+}
+
+/* Nouveau fond inspiré de l'image partagée */
+.geometric-bg {
+  background-color: #ffffff;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(230, 76, 60, 0.15) 0%, rgba(230, 76, 60, 0) 30%),
+    radial-gradient(circle at 90% 5%, rgba(41, 128, 135, 0.2) 0%, rgba(41, 128, 135, 0) 35%),
+    radial-gradient(circle at 85% 80%, rgba(41, 128, 135, 0.15) 0%, rgba(41, 128, 135, 0) 30%),
+    radial-gradient(circle at 30% 90%, rgba(230, 76, 60, 0.1) 0%, rgba(230, 76, 60, 0) 25%);
+  position: relative;
+}
+
+.dark .geometric-bg {
+  background-color: #121212;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(230, 76, 60, 0.15) 0%, rgba(230, 76, 60, 0) 30%),
+    radial-gradient(circle at 90% 5%, rgba(41, 128, 135, 0.2) 0%, rgba(41, 128, 135, 0) 35%),
+    radial-gradient(circle at 85% 80%, rgba(41, 128, 135, 0.15) 0%, rgba(41, 128, 135, 0) 30%),
+    radial-gradient(circle at 30% 90%, rgba(230, 76, 60, 0.1) 0%, rgba(230, 76, 60, 0) 25%);
+}
+
+.geometric-pattern::before,
+.geometric-pattern::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.geometric-pattern::before {
+  top: 5%;
+  left: 15%;
+  width: 200px;
+  height: 200px;
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 15px 15px;
+}
+
+.geometric-pattern::after {
+  bottom: 10%;
+  right: 10%;
+  width: 180px;
+  height: 180px;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 10px 10px;
 }

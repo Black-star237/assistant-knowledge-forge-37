@@ -47,7 +47,7 @@ const App = () => (
       <AuthProvider>
         <SidebarProvider defaultOpen={true}>
           <BrowserRouter>
-            <div className="mesh-bg flex min-h-screen w-full">
+            <div className="geometric-bg geometric-pattern flex min-h-screen w-full">
               <Routes>
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/" element={<Index />} />
