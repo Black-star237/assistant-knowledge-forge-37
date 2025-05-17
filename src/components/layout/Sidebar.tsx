@@ -38,32 +38,32 @@ export const AppSidebar = () => {
   // Classe active pour NavLink
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
     `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg ${isActive
-      ? 'bg-sidebar-accent text-primary font-medium'
-      : 'hover:bg-sidebar-accent/50 text-sidebar-foreground'
+      ? 'bg-white text-primary font-medium'
+      : 'hover:bg-gray-100 text-gray-700'
     }`;
 
   return (
     <>
       {isMobile && openMobile && <div className="sidebar-overlay" />}
       <Sidebar
-        className="glassmorphism border-r border-white/20"
+        className="bg-white shadow-md border-r border-gray-200"
         collapsible="icon"
       >
-        <SidebarTrigger className="m-2 self-end text-sidebar-foreground/80 hover:text-sidebar-foreground" />
+        <SidebarTrigger className="m-2 self-end text-gray-500 hover:text-gray-700" />
 
         {/* Avatar utilisateur */}
         <div className={`p-4 ${isOpen ? 'items-start' : 'items-center'} flex flex-col mb-3`}>
           <div className={`flex ${isOpen ? 'flex-row items-center w-full gap-4' : 'flex-col'}`}>
-            <Avatar className="h-11 w-11 border-2 border-primary/30">
-              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-white font-medium">
+            <Avatar className="h-11 w-11 border-2 border-black">
+              <AvatarFallback className="bg-blue-500 text-white font-medium">
                 {user?.email?.substring(0, 2).toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>
 
             {isOpen && (
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-sidebar-foreground">{user?.email}</span>
-                <Button variant="link" asChild className="h-auto p-0 text-xs text-sidebar-foreground/70 hover:text-primary">
+                <span className="text-sm font-medium text-gray-800">{user?.email}</span>
+                <Button variant="link" asChild className="h-auto p-0 text-xs text-gray-600 hover:text-primary">
                   <NavLink to="/profile">Mon profil</NavLink>
                 </Button>
               </div>
@@ -73,14 +73,14 @@ export const AppSidebar = () => {
 
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground/70 font-medium">Navigation</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-gray-600 font-medium">Navigation</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {mainItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <NavLink to={item.url} className={getNavLinkClass} end>
-                        <item.icon className={`h-5 w-5 ${location.pathname === item.url ? 'text-primary' : 'text-sidebar-foreground/70'}`} />
+                        <item.icon className={`h-5 w-5 ${location.pathname === item.url ? 'text-primary' : 'text-gray-500'}`} />
                         {isOpen && <span className="font-medium">{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
@@ -96,7 +96,7 @@ export const AppSidebar = () => {
           <div className="mt-auto p-2 mb-3">
             <SidebarMenuButton asChild>
               <NavLink to="/profile" className={getNavLinkClass}>
-                <User className="h-5 w-5" />
+                <User className="h-5 w-5 text-gray-500" />
               </NavLink>
             </SidebarMenuButton>
           </div>
