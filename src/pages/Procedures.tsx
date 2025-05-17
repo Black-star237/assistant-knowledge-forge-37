@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -231,12 +232,12 @@ const Procedures = () => {
                   <span className="ml-2">Chargement des procédures...</span>
                 </div>
               ) : filteredProcedures.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2">
                   {filteredProcedures.map((procedure) => (
                     <Card key={procedure.id} className="overflow-hidden">
                       <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
-                          <CardTitle className="text-base">{procedure.title}</CardTitle>
+                          <CardTitle className="text-base md:text-xl">{procedure.title}</CardTitle>
                           <div className="rounded-full bg-primary/10 p-1.5 text-primary">
                             <FileText className="h-4 w-4" />
                           </div>
@@ -246,35 +247,35 @@ const Procedures = () => {
                         <div className="space-y-3">
                           <div>
                             <h4 className="text-sm font-medium">Description:</h4>
-                            <p className="text-sm mt-1">{procedure.description}</p>
+                            <p className="text-xs md:text-sm mt-1">{procedure.description}</p>
                           </div>
                           <div>
                             <h4 className="text-sm font-medium">Étapes:</h4>
-                            <p className="text-sm mt-1 whitespace-pre-line">{procedure.steps}</p>
+                            <p className="text-xs md:text-sm mt-1 whitespace-pre-line">{procedure.steps}</p>
                           </div>
                         </div>
                       </CardContent>
-                      <CardFooter className="border-t bg-muted/50 px-6 py-3">
+                      <CardFooter className="border-t bg-muted/50 px-3 py-2 md:px-6 md:py-3">
                         <div className="flex items-center justify-between w-full text-xs text-muted-foreground">
-                          <span>Créé le {new Date(procedure.created_at).toLocaleDateString()}</span>
-                          <div className="flex gap-2">
+                          <span className="truncate text-[10px] md:text-xs">Créé le {new Date(procedure.created_at).toLocaleDateString()}</span>
+                          <div className="flex gap-1 md:gap-2">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7"
+                              className="h-6 w-6 md:h-7 md:w-7"
                               onClick={() => handleEditProcedure(procedure)}
                               disabled={mutation.isPending || deleteMutation.isPending}
                             >
-                              <Edit className="h-4 w-4" />
+                              <Edit className="h-3 w-3 md:h-4 md:w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 text-destructive"
+                              className="h-6 w-6 md:h-7 md:w-7 text-destructive"
                               onClick={() => handleDeleteProcedure(procedure.id)}
                               disabled={deleteMutation.isPending || mutation.isPending}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
                             </Button>
                           </div>
                         </div>

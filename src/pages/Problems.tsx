@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -310,13 +311,13 @@ const Problems = () => {
                   <span className="ml-2">Chargement des problèmes...</span>
                 </div>
               ) : filteredProblems.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2">
                   {filteredProblems.map((problem) => (
                     <Card key={problem.id} className="overflow-hidden">
                       <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
                           <div>
-                            <CardTitle className="text-base">{problem.title}</CardTitle>
+                            <CardTitle className="text-base md:text-xl">{problem.title}</CardTitle>
                             <CardDescription className="flex flex-wrap gap-1.5 mt-1">
                               {problem.tags.map((tag) => (
                                 <Badge key={tag} variant="outline" className="text-[10px]">
@@ -334,39 +335,41 @@ const Problems = () => {
                         <div className="space-y-3">
                           <div>
                             <h4 className="text-sm font-medium">Problème:</h4>
-                            <p className="text-sm mt-1">{problem.problem}</p>
+                            <p className="text-xs md:text-sm mt-1">{problem.problem}</p>
                           </div>
                           <div>
                             <h4 className="text-sm font-medium">Solution:</h4>
-                            <p className="text-sm mt-1 whitespace-pre-line">{problem.solution}</p>
+                            <p className="text-xs md:text-sm mt-1 whitespace-pre-line">{problem.solution}</p>
                           </div>
                         </div>
                       </CardContent>
-                      <CardFooter className="border-t bg-muted/50 px-6 py-3">
+                      <CardFooter className="border-t bg-muted/50 px-3 py-2 md:px-6 md:py-3">
                         <div className="flex items-center justify-between w-full text-xs text-muted-foreground">
                           <div className="flex items-center gap-2">
-                            <span>Mis à jour le {new Date(problem.updated_at).toLocaleDateString()}</span>
-                            <span>•</span>
-                            <span className="capitalize">{problem.category}</span>
+                            <span className="truncate text-[10px] md:text-xs">Mis à jour le {new Date(problem.updated_at).toLocaleDateString()}</span>
+                            <span className="hidden sm:inline">•</span>
+                            <span className="capitalize truncate text-[10px] md:text-xs">{problem.category}</span>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-1 md:gap-2">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7"
+                              className="h-6 w-6 md:h-7 md:w-7"
                               onClick={() => handleEditProblem(problem)}
                               disabled={mutation.isPending || deleteMutation.isPending}
                             >
-                              <Edit className="h-4 w-4" />
+                              <Edit className="h-3 w-3 md:h-4 md:w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 text-destructive"
+                              className="h-6 w-6 md:h-7 md:w-7 text-destructive"
                               onClick={() => handleDeleteProblem(problem.id)}
                               disabled={deleteMutation.isPending || mutation.isPending}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              {deleteMutation.isPending && deleteMutation.variables === problem.id ? 
+                                <Loader2 className="h-3 w-3 md:h-4 md:w-4 animate-spin" /> : 
+                                <Trash2 className="h-3 w-3 md:h-4 md:w-4" />}
                             </Button>
                           </div>
                         </div>
