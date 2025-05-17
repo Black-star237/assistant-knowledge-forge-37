@@ -16,12 +16,32 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ProfilePage from "./pages/Profile"; 
 import LicenceWhatsapp from "./pages/LicenceWhatsapp";
+import "./App.css";
+
+// Ajout de styles pour l'effet de flou sur la sidebar mobile
+const sidebarStyles = `
+  @media (max-width: 767px) {
+    .sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background-color: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+    }
+    
+    [data-state="expanded"] ~ div:not([data-sidebar="sidebar"]) {
+      filter: blur(2px);
+      transition: filter 0.3s ease;
+    }
+  }
+`;
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <style>{sidebarStyles}</style>
       <Toaster />
       <Sonner />
       <AuthProvider>

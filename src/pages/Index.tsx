@@ -116,7 +116,7 @@ const Index = () => {
                   </div>
                   
                   <div className="mt-6 space-y-4">
-                    <div className="grid gap-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+                    <div className="grid gap-2 grid-cols-2 sm:grid-cols-2 md:grid-cols-4">
                       <div className="flex items-center gap-2 rounded-lg border p-4 bg-background">
                         <div className="h-2 w-2 rounded-full bg-green-500"></div>
                         <div className="text-sm">
@@ -148,7 +148,7 @@ const Index = () => {
 
               <section>
                 <h2 className="mb-4 text-xl font-semibold">Gestion de l'assistant</h2>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+                <div className="grid gap-4 grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-2">
                   <DashboardCard
                     title="Coupons"
                     description="Paris disponibles pour vos clients"
