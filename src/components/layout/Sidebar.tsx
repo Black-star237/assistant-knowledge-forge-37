@@ -20,7 +20,7 @@ import { Home, Bookmark, FileText, HelpCircle, Info, User, PhoneCall } from 'luc
 import { useAuth } from '@/context/AuthContext';
 
 export const AppSidebar = () => {
-  const { open: isOpen, openMobile, setOpenMobile, isMobile, toggleSidebar } = useSidebar();
+  const { open: isOpen, openMobile, isMobile } = useSidebar();
   const { user } = useAuth();
   const location = useLocation();
   const mainItems = [
@@ -33,32 +33,23 @@ export const AppSidebar = () => {
   ];
 
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `w-full flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors ${
-      isActive
-        ? 'bg-orange-500 text-white border-orange-500'
-        : 'bg-white text-black border-gray-200 hover:bg-gray-100'
+    `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border ${isActive
+      ? 'bg-orange-500 text-black font-medium border-orange-500'
+      : 'bg-white text-black hover:bg-gray-100 border-gray-200'
     }`;
 
   return (
     <>
-      {isMobile && isOpen && <div className="fixed inset-0 bg-black/30 z-20" onClick={() => setOpenMobile(false)} />}
+      {isMobile && openMobile && <div className="sidebar-overlay" />}
       <Sidebar
-        className={
-          `fixed top-0 left-0 h-full z-30 transform transition-transform bg-white ${
-            isMobile
-              ? isOpen
-                ? 'translate-x-0 w-3/4 rounded-tr-xl rounded-br-xl'
-                : '-translate-x-full'
-              : 'relative translate-x-0 w-64 rounded-xl shadow-lg'
-          }`
-        }
-        collapsible={isMobile ? 'offcanvas' : 'icon'}
+        className="bg-white rounded-xl shadow-lg border-none"
+        collapsible="icon"
       >
-        <SidebarTrigger className={`m-2 ${isMobile ? 'text-black' : 'self-end text-black'} hover:text-orange-500`} />
+        <SidebarTrigger className="m-2 self-end text-black hover:text-orange-500" />
 
         {/* Avatar utilisateur */}
-        <div className={`p-4 flex flex-col mb-3 ${isOpen ? 'items-start' : 'items-center'}`}>  
-          <div className={`flex ${isOpen ? 'flex-row items-center w-full gap-4' : 'flex-col'}`}>            
+        <div className={`p-4 ${isOpen ? 'items-start' : 'items-center'} flex flex-col mb-3`}>  
+          <div className={`flex ${isOpen ? 'flex-row items-center w-full gap-4' : 'flex-col'}`}>
             <Avatar className="h-11 w-11 border-2 border-orange-500">
               <AvatarFallback className="bg-orange-500 text-white font-medium">
                 {user?.email?.substring(0, 2).toUpperCase() || 'U'}
@@ -68,11 +59,7 @@ export const AppSidebar = () => {
             {isOpen && (
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-black">{user?.email}</span>
-                <Button
-                  variant="link"
-                  asChild
-                  className="h-auto p-0 text-xs text-black hover:text-orange-500"
-                >
+                <Button variant="link" asChild className="h-auto p-0 text-xs text-black hover:text-orange-500">
                   <NavLink to="/profile">Mon profil</NavLink>
                 </Button>
               </div>
@@ -82,19 +69,15 @@ export const AppSidebar = () => {
 
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel className="text-black font-medium mb-2">Navigation</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-black font-medium">Navigation</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {mainItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <NavLink to={item.url} end className={getNavLinkClass}>
-                        {({ isActive }) => (
-                          <>
-                            <item.icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-gray-500'}`} />
-                            {isOpen && <span className="font-medium">{item.title}</span>}
-                          </>
-                        )}
+                      <NavLink to={item.url} className={getNavLinkClass} end>
+                        <item.icon className={`h-5 w-5 ${location.pathname === item.url ? 'text-black' : 'text-gray-500'}`} />
+                        {isOpen && <span className="font-medium">{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -104,9 +87,8 @@ export const AppSidebar = () => {
           </SidebarGroup>
         </SidebarContent>
 
-        {/* Profil lien mobile */}
-        {!isOpen && isMobile && (
-          <div className="mt-auto p-4">
+        {!isOpen && (
+          <div className="mt-auto p-2 mb-3">
             <SidebarMenuButton asChild>
               <NavLink to="/profile" className={getNavLinkClass}>
                 <User className="h-5 w-5 text-black" />
@@ -118,3 +100,4 @@ export const AppSidebar = () => {
     </>
   );
 };
+
