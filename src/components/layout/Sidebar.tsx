@@ -75,6 +75,19 @@ export const AppSidebar = () => {
                 {mainItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
+                      <NavLink to={item.url} end className={({ isActive }) => getNavLinkClass({ isActive })}>
+                        {({ isActive }) => (
+                          <>  
+                            <item.icon className={`h-5 w-5 ${isActive ? 'text-black' : 'text-gray-500'}`} />
+                            {isOpen && <span className="font-medium">{item.title}</span>}
+                          </>
+                        )}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
                       <NavLink to={item.url} className={getNavLinkClass} end>
                         <item.icon className={`h-5 w-5 ${location.pathname === item.url ? 'text-black' : 'text-gray-500'}`} />
                         {isOpen && <span className="font-medium">{item.title}</span>}
@@ -100,4 +113,3 @@ export const AppSidebar = () => {
     </>
   );
 };
-
