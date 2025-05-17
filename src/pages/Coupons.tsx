@@ -391,7 +391,7 @@ const Coupons = () => {
               ) : (
                 <>
                   {coupons.length > 0 ? (
-                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-4 grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
                       {coupons.map((coupon) => (
                         <Card key={coupon.id} className="overflow-hidden flex flex-col">
                           {coupon.image_url && (
@@ -409,8 +409,8 @@ const Coupons = () => {
                             </div>
                           )}
                           <CardHeader className="pb-2">
-                            <CardTitle>{coupon.title}</CardTitle>
-                            <CardDescription className="flex items-center gap-2 flex-wrap">
+                            <CardTitle className="text-base md:text-xl">{coupon.title}</CardTitle>
+                            <CardDescription className="flex items-center gap-2 flex-wrap text-xs md:text-sm">
                               <span>Cote: {coupon.odds}</span>
                               <span>•</span>
                               <span>Expire: {new Date(coupon.expiry_date).toLocaleDateString()}</span>
@@ -423,39 +423,41 @@ const Coupons = () => {
                             </CardDescription>
                           </CardHeader>
                           <CardContent>
-                            <p className="text-sm break-words">{coupon.description}</p>
+                            <p className="text-xs md:text-sm break-words">{coupon.description}</p>
                             <div className="mt-3 flex items-center gap-2 rounded-md bg-muted p-2">
-                              <code className="text-xs font-semibold">{coupon.code}</code>
+                              <code className="text-xs font-semibold truncate flex-1">{coupon.code}</code>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="ml-auto h-6 w-6"
+                                className="ml-auto h-6 w-6 shrink-0"
                                 onClick={() => handleCopyCoupon(coupon.code)}
                               >
                                 <Copy className="h-3 w-3" />
                               </Button>
                             </div>
                           </CardContent>
-                          <CardFooter className="border-t bg-muted/50 px-6 py-3 mt-auto">
+                          <CardFooter className="border-t bg-muted/50 px-3 py-2 md:px-6 md:py-3 mt-auto">
                             <div className="flex items-center justify-between w-full text-xs text-muted-foreground">
-                              <span>Créé le {new Date(coupon.created_at).toLocaleDateString()}</span>
-                              <div className="flex gap-2">
+                              <span className="truncate text-[10px] md:text-xs">Créé le {new Date(coupon.created_at).toLocaleDateString()}</span>
+                              <div className="flex gap-1 md:gap-2">
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-7 w-7"
+                                  className="h-6 w-6 md:h-7 md:w-7"
                                   onClick={() => handleEditCoupon(coupon)}
                                 >
-                                  <Edit className="h-4 w-4" />
+                                  <Edit className="h-3 w-3 md:h-4 md:w-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-7 w-7 text-destructive"
+                                  className="h-6 w-6 md:h-7 md:w-7 text-destructive"
                                   onClick={() => handleDeleteCoupon(coupon.id)}
                                   disabled={deleteMutation.isPending && deleteMutation.variables === coupon.id}
                                 >
-                                  {deleteMutation.isPending && deleteMutation.variables === coupon.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                  {deleteMutation.isPending && deleteMutation.variables === coupon.id ? 
+                                    <Loader2 className="h-3 w-3 md:h-4 md:w-4 animate-spin" /> : 
+                                    <Trash2 className="h-3 w-3 md:h-4 md:w-4" />}
                                 </Button>
                               </div>
                             </div>
