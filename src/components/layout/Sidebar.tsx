@@ -34,8 +34,8 @@ export const AppSidebar = () => {
 
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
     `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg ${isActive
-      ? 'bg-green-500 text-white font-medium' // Rubrique active: fond vert vif, texte blanc
-      : 'bg-blue-50 text-gray-700' // Rubriques inactives: fond bleu clair, texte noir
+      ? 'sidebar-item-active' // Rubrique active: fond vert vif, texte blanc
+      : 'sidebar-item' // Rubriques inactives: fond bleu clair, texte noir
     }`;
 
   return (
@@ -76,7 +76,7 @@ export const AppSidebar = () => {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <NavLink to={item.url} className={getNavLinkClass} end>
-                        <item.icon className={`h-5 w-5 ${location.pathname === item.url ? 'text-white' : 'text-gray-500'}`} />
+                        <item.icon className={`h-5 w-5 ${location.pathname === item.url ? 'text-white' : 'text-gray-700'}`} />
                         {isOpen && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
