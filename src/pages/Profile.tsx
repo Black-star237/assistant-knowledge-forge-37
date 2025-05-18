@@ -26,7 +26,7 @@ import type { Tables, TablesUpdate } from '@/integrations/supabase/types';
 
 const profileFormSchema = z.object({
   nom: z.string().min(2, { message: "Le nom doit contenir au moins 2 caractères." }).optional().or(z.literal('')),
-  "Numero whatsapp Bot": z.string().optional().or(z.literal('')),
+  Numero_whatsapp_Bot: z.string().optional().or(z.literal('')),
   "Numero Whatsapp perso": z.string().optional().or(z.literal('')),
   "Photo de profile": z.string().optional().nullable(),
 });
@@ -45,7 +45,7 @@ const ProfilePage = () => {
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       nom: '',
-      "Numero whatsapp Bot": '',
+      Numero_whatsapp_Bot: '',
       "Numero Whatsapp perso": '',
       "Photo de profile": null,
     },
@@ -68,7 +68,7 @@ const ProfilePage = () => {
           setProfile(data);
           form.reset({
             nom: data.nom || '',
-            "Numero whatsapp Bot": data["Numero whatsapp Bot"] || '',
+            Numero_whatsapp_Bot: data.Numero_whatsapp_Bot || '',
             "Numero Whatsapp perso": data["Numero Whatsapp perso"] || '',
             "Photo de profile": data["Photo de profile"],
           });
@@ -138,7 +138,7 @@ const ProfilePage = () => {
 
     const updateData: TablesUpdate<'user_profiles'> = {
       nom: values.nom,
-      "Numero whatsapp Bot": values["Numero whatsapp Bot"],
+      Numero_whatsapp_Bot: values.Numero_whatsapp_Bot,
       "Numero Whatsapp perso": values["Numero Whatsapp perso"],
       "Photo de profile": imageUrl,
       // 'Offre' is not included, so it won't be updated.
@@ -202,12 +202,12 @@ const ProfilePage = () => {
                     <FormField
                       control={form.control}
                       name="Photo de profile"
-                      render={({ field }) => ( // field is not directly used for ImagePicker value but can be for errors
+                      render={({ field }) => (
                         <FormItem>
                            <ImagePicker
                             currentImageUrl={field.value}
                             onImageSelect={handleImageSelect}
-                            onImageUpload={handleImageUpload} // This is used internally by ImagePicker if it were to auto-upload
+                            onImageUpload={handleImageUpload}
                             isUploading={isUploading}
                             fallbackText={fallbackName}
                           />
@@ -230,7 +230,7 @@ const ProfilePage = () => {
                     />
                     <FormField
                       control={form.control}
-                      name="Numero whatsapp Bot"
+                      name="Numero_whatsapp_Bot"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Numéro WhatsApp Bot</FormLabel>
@@ -274,4 +274,3 @@ const ProfilePage = () => {
 };
 
 export default ProfilePage;
-

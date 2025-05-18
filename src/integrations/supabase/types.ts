@@ -214,7 +214,7 @@ export type Database = {
           created_at: string
           id: number
           id_user: string | null
-          id_WaAPI: string | null
+          id_WaAPI: number | null
           id_Workflow: string | null
           n8n_connected: boolean | null
           Nom: string | null
@@ -224,7 +224,7 @@ export type Database = {
           created_at?: string
           id?: number
           id_user?: string | null
-          id_WaAPI?: string | null
+          id_WaAPI?: number | null
           id_Workflow?: string | null
           n8n_connected?: boolean | null
           Nom?: string | null
@@ -234,7 +234,7 @@ export type Database = {
           created_at?: string
           id?: number
           id_user?: string | null
-          id_WaAPI?: string | null
+          id_WaAPI?: number | null
           id_Workflow?: string | null
           n8n_connected?: boolean | null
           Nom?: string | null
@@ -503,7 +503,7 @@ export type Database = {
           id: string
           nom: string | null
           "Numero Whatsapp perso": string | null
-          Numero_whatsapp_Bot: string | null
+          Numero_whatsapp_Bot: number | null
           Offre: string | null
           "Photo de profile": string | null
           solvable: boolean | null
@@ -514,7 +514,7 @@ export type Database = {
           id: string
           nom?: string | null
           "Numero Whatsapp perso"?: string | null
-          Numero_whatsapp_Bot?: string | null
+          Numero_whatsapp_Bot?: number | null
           Offre?: string | null
           "Photo de profile"?: string | null
           solvable?: boolean | null
@@ -525,7 +525,7 @@ export type Database = {
           id?: string
           nom?: string | null
           "Numero Whatsapp perso"?: string | null
-          Numero_whatsapp_Bot?: string | null
+          Numero_whatsapp_Bot?: number | null
           Offre?: string | null
           "Photo de profile"?: string | null
           solvable?: boolean | null

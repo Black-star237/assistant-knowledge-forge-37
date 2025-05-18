@@ -132,7 +132,7 @@ export const waApiService = {
    * @param licenceId ID de la licence
    * @param isConnected Statut de connexion
    */
-  async updateLicenceStatus(licenceId: string | number, isConnected: boolean): Promise<void> {
+  async updateLicenceStatus(licenceId: number, isConnected: boolean): Promise<void> {
     const { error } = await supabase
       .from("Licences Whatsapp")
       .update({ n8n_connected: isConnected })
