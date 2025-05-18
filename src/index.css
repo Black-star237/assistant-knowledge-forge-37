@@ -118,6 +118,10 @@
   .transparent-grid {
     @apply bg-transparent gap-6;
   }
+  
+  .white-card {
+    @apply bg-white dark:bg-white/10 border border-border/40;
+  }
 }
 
 /* Nouveau dégradé de fond pêche/rose clair vers blanc */

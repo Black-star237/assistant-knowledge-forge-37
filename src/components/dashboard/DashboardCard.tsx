@@ -64,7 +64,7 @@ export function DashboardCard({
 
   return (
     <Card className={cn(
-      "overflow-hidden transition-all hover:shadow-soft rounded-xl bg-transparent",
+      "overflow-hidden transition-all hover:shadow-soft rounded-xl bg-white dark:bg-white/10",
       getColorClass(),
       className
     )}>
