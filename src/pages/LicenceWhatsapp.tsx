@@ -14,6 +14,7 @@ import { Loader2, Check, X, RefreshCw, Link as LinkIcon, Unlink, Plus } from "lu
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
+import { waApiService } from "@/services/waapi";
 
 const LicenceWhatsapp = () => {
   const { toast } = useToast();
@@ -71,23 +72,66 @@ const LicenceWhatsapp = () => {
     enabled: !!user?.id,
   });
 
-  // Handle connection to WhatsApp
-  const handleConnect = (method: "qr" | "code") => {
-    setConnectionMethod(method);
+  // Handle connection to WhatsApp with QR Code
+  const handleConnectQR = async () => {
+    setConnectionMethod("qr");
     setDialogOpen(true);
     setIsLoading(true);
 
-    // Simulate API call to get QR code or connection code
-    setTimeout(() => {
-      setIsLoading(false);
-      if (method === "qr") {
-        // In a real implementation, this would be a base64 encoded QR code from the API
-        setQrCode("https://via.placeholder.com/250x250?text=QR+Code");
-      } else {
-        // In a real implementation, this would be a code from the API
-        setConnectionCode("123-456-789");
+    try {
+      if (!licenceData?.id_WaAPI) {
+        throw new Error("ID WaAPI non trouvé");
       }
-    }, 1500);
+
+      const response = await waApiService.getQrCode(licenceData.id_WaAPI);
+      setQrCode(response.qrCode.data.qr_code);
+      
+      // Après une connexion réussie, mettons à jour le statut
+      await waApiService.updateLicenceStatus(licenceData.id, true);
+      refetch();
+    } catch (error) {
+      console.error("Error getting QR code:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de récupérer le QR code",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle connection to WhatsApp with Pairing Code
+  const handleConnectCode = async () => {
+    setConnectionMethod("code");
+    setDialogOpen(true);
+    setIsLoading(true);
+
+    try {
+      if (!licenceData?.id_WaAPI || !userProfile?.Numero_whatsapp_Bot) {
+        throw new Error("ID WaAPI ou numéro WhatsApp non trouvé");
+      }
+      
+      const response = await waApiService.requestPairingCode(
+        licenceData.id_WaAPI, 
+        userProfile.Numero_whatsapp_Bot
+      );
+      
+      setConnectionCode(response.data.data.pairingCode);
+      
+      // Après une connexion réussie, mettons à jour le statut
+      await waApiService.updateLicenceStatus(licenceData.id, true);
+      refetch();
+    } catch (error) {
+      console.error("Error getting pairing code:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de récupérer le code de jumelage",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Handle disconnection from WhatsApp
@@ -95,19 +139,15 @@ const LicenceWhatsapp = () => {
     setIsLoading(true);
 
     try {
-      // In a real implementation, call API to disconnect
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Update database status
-      if (licenceData?.id) {
-        const { error } = await supabase
-          .from("Licences Whatsapp")
-          .update({ n8n_connected: false })
-          .eq("id", licenceData.id);
-
-        if (error) throw error;
+      if (!licenceData?.id_WaAPI) {
+        throw new Error("ID WaAPI non trouvé");
       }
 
+      await waApiService.logout(licenceData.id_WaAPI);
+      
+      // Mettre à jour le statut dans la base de données
+      await waApiService.updateLicenceStatus(licenceData.id, false);
+      
       toast({
         title: "Déconnexion réussie",
         description: "La licence a été déconnectée de WhatsApp",
@@ -130,8 +170,11 @@ const LicenceWhatsapp = () => {
     setIsLoading(true);
 
     try {
-      // In a real implementation, call API to reboot
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      if (!licenceData?.id_WaAPI) {
+        throw new Error("ID WaAPI non trouvé");
+      }
+
+      await waApiService.reboot(licenceData.id_WaAPI);
 
       toast({
         title: "Redémarrage effectué",
@@ -339,6 +382,12 @@ const LicenceWhatsapp = () => {
                         <p className="text-sm text-muted-foreground">ID de la licence</p>
                         <p className="font-mono text-sm">{licenceData.id || "N/A"}</p>
                       </div>
+                      {licenceData.id_WaAPI && (
+                        <div className="space-y-2">
+                          <p className="text-sm text-muted-foreground">ID WaAPI</p>
+                          <p className="font-mono text-sm">{licenceData.id_WaAPI}</p>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                   <CardFooter className="flex flex-wrap gap-3 justify-between">
@@ -346,7 +395,7 @@ const LicenceWhatsapp = () => {
                       <DialogTrigger asChild>
                         <Button 
                           variant="default" 
-                          onClick={() => handleConnect("qr")}
+                          onClick={() => handleConnectQR()}
                           disabled={isLoading}
                         >
                           <LinkIcon className="mr-2 h-4 w-4" />
@@ -362,7 +411,7 @@ const LicenceWhatsapp = () => {
                         </DialogHeader>
                         <div className="grid grid-cols-2 gap-4 py-4">
                           <Button 
-                            onClick={() => handleConnect("qr")}
+                            onClick={handleConnectQR}
                             className="flex flex-col items-center justify-center p-6 h-28"
                             variant={connectionMethod === "qr" ? "default" : "outline"}
                           >
@@ -370,7 +419,7 @@ const LicenceWhatsapp = () => {
                             <span className="text-xs text-center">Scanner un code QR avec votre téléphone</span>
                           </Button>
                           <Button 
-                            onClick={() => handleConnect("code")}
+                            onClick={handleConnectCode}
                             className="flex flex-col items-center justify-center p-6 h-28"
                             variant={connectionMethod === "code" ? "default" : "outline"}
                           >

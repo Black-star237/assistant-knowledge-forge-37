@@ -502,8 +502,8 @@ export type Database = {
           durée_souscription: number | null
           id: string
           nom: string | null
-          "Numero whatsapp Bot": string | null
           "Numero Whatsapp perso": string | null
+          Numero_whatsapp_Bot: string | null
           Offre: string | null
           "Photo de profile": string | null
           solvable: boolean | null
@@ -513,8 +513,8 @@ export type Database = {
           durée_souscription?: number | null
           id: string
           nom?: string | null
-          "Numero whatsapp Bot"?: string | null
           "Numero Whatsapp perso"?: string | null
+          Numero_whatsapp_Bot?: string | null
           Offre?: string | null
           "Photo de profile"?: string | null
           solvable?: boolean | null
@@ -524,8 +524,8 @@ export type Database = {
           durée_souscription?: number | null
           id?: string
           nom?: string | null
-          "Numero whatsapp Bot"?: string | null
           "Numero Whatsapp perso"?: string | null
+          Numero_whatsapp_Bot?: string | null
           Offre?: string | null
           "Photo de profile"?: string | null
           solvable?: boolean | null
