@@ -222,11 +222,11 @@ const LicenceWhatsapp = () => {
         throw new Error("Erreur lors de la création de la commande");
       }
       
-      const dbOrderId = String(orderData[0].id); // Convert to string for createPaymentSession
+      const dbOrderId = String(orderData[0].id);
       
       // Call Lygos API to create payment session
       const paymentResponse = await createPaymentSession(
-        dbOrderId,
+        dbOrderId, // Déjà converti en string
         20600, // Montant en FCFA
         `${window.location.origin}/licence-whatsapp?success=true&orderId=${dbOrderId}`,
         `${window.location.origin}/licence-whatsapp?failure=true&orderId=${dbOrderId}`
@@ -265,7 +265,7 @@ const LicenceWhatsapp = () => {
       // Verify payment with Lygos API
       const verifyPaymentStatus = async () => {
         try {
-          const verificationResponse = await verifyPayment(orderId); // orderId is already a string from URL params
+          const verificationResponse = await verifyPayment(orderId); // orderId est déjà une string
           
           if (verificationResponse.status === "SUCCESS" || verificationResponse.status === "PAID") {
             // Update order status in Supabase

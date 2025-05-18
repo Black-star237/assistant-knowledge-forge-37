@@ -4,6 +4,31 @@ const LYGOS_API_KEY = "lygosapp-1b0aabd2-e115-4224-bc8f-254d355d62a4";
 const LYGOS_API_URL = "https://api.lygosapp.com/v1";
 
 /**
+ * Interface pour la réponse de création de session de paiement
+ */
+export interface LygosPaymentResponse {
+  id: string;
+  amount: number;
+  currency: string;
+  shop_name: string;
+  message: string;
+  user_id: string;
+  creation_date: string;
+  link: string;
+  order_id: string;
+  success_url: string;
+  failure_url: string;
+}
+
+/**
+ * Interface pour la réponse de vérification de paiement
+ */
+export interface LygosVerificationResponse {
+  order_id: string;
+  status: string;
+}
+
+/**
  * Crée une session de paiement via Lygos
  * @param orderId Identifiant de la commande (string)
  * @param amount Montant en FCFA
@@ -15,7 +40,7 @@ export const createPaymentSession = async (
   amount: number,
   successUrl: string,
   failureUrl: string
-) => {
+): Promise<LygosPaymentResponse> => {
   const options = {
     method: "POST",
     headers: {
@@ -46,7 +71,7 @@ export const createPaymentSession = async (
  * Vérifie le statut d'un paiement Lygos
  * @param orderId Identifiant de la commande (string)
  */
-export const verifyPayment = async (orderId: string) => {
+export const verifyPayment = async (orderId: string): Promise<LygosVerificationResponse> => {
   const options = {
     method: "GET",
     headers: { "api-key": LYGOS_API_KEY },
