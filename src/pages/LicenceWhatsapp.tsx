@@ -89,7 +89,8 @@ const LicenceWhatsapp = () => {
       setQrCode(response.qrCode.data.qr_code);
       
       // Après une connexion réussie, mettons à jour le statut
-      await waApiService.updateLicenceStatus(licenceData.id, true);
+      // Ici, nous convertissons licenceData.id en nombre car updateLicenceStatus attend un number
+      await waApiService.updateLicenceStatus(Number(licenceData.id), true);
       refetch();
     } catch (error) {
       console.error("Error getting QR code:", error);
@@ -125,7 +126,8 @@ const LicenceWhatsapp = () => {
       setConnectionCode(response.data.data.pairingCode);
       
       // Après une connexion réussie, mettons à jour le statut
-      await waApiService.updateLicenceStatus(licenceData.id, true);
+      // Ici, nous convertissons licenceData.id en nombre car updateLicenceStatus attend un number
+      await waApiService.updateLicenceStatus(Number(licenceData.id), true);
       refetch();
     } catch (error) {
       console.error("Error getting pairing code:", error);
@@ -152,7 +154,8 @@ const LicenceWhatsapp = () => {
       await waApiService.logout(waApiId);
       
       // Mettre à jour le statut dans la base de données
-      await waApiService.updateLicenceStatus(licenceData.id, false);
+      // Ici, nous convertissons licenceData.id en nombre car updateLicenceStatus attend un number
+      await waApiService.updateLicenceStatus(Number(licenceData.id), false);
       
       toast({
         title: "Déconnexion réussie",
