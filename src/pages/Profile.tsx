@@ -21,7 +21,7 @@ import { Loader2, Save } from 'lucide-react';
 import { AppSidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import ImagePicker from '@/components/ImagePicker'; // Import ImagePicker
+import ImagePicker from '@/components/ImagePicker';
 import type { Tables, TablesUpdate } from '@/integrations/supabase/types';
 
 const profileFormSchema = z.object({
@@ -68,7 +68,7 @@ const ProfilePage = () => {
           setProfile(data);
           form.reset({
             nom: data.nom || '',
-            Numero_whatsapp_Bot: data.Numero_whatsapp_Bot || '',
+            Numero_whatsapp_Bot: data.Numero_whatsapp_Bot ? String(data.Numero_whatsapp_Bot) : '',
             "Numero Whatsapp perso": data["Numero Whatsapp perso"] || '',
             "Photo de profile": data["Photo de profile"],
           });
@@ -136,9 +136,14 @@ const ProfilePage = () => {
       }
     }
 
+    // Convert string to number for Numero_whatsapp_Bot if it's not empty
+    const whatsappBotNumber = values.Numero_whatsapp_Bot ? 
+      parseFloat(values.Numero_whatsapp_Bot) || null : 
+      null;
+
     const updateData: TablesUpdate<'user_profiles'> = {
       nom: values.nom,
-      Numero_whatsapp_Bot: values.Numero_whatsapp_Bot,
+      Numero_whatsapp_Bot: whatsappBotNumber,
       "Numero Whatsapp perso": values["Numero Whatsapp perso"],
       "Photo de profile": imageUrl,
       // 'Offre' is not included, so it won't be updated.

@@ -83,7 +83,8 @@ const LicenceWhatsapp = () => {
         throw new Error("ID WaAPI non trouvé");
       }
 
-      const response = await waApiService.getQrCode(licenceData.id_WaAPI);
+      const waApiId = String(licenceData.id_WaAPI);
+      const response = await waApiService.getQrCode(waApiId);
       setQrCode(response.qrCode.data.qr_code);
       
       // Après une connexion réussie, mettons à jour le statut
@@ -112,9 +113,12 @@ const LicenceWhatsapp = () => {
         throw new Error("ID WaAPI ou numéro WhatsApp non trouvé");
       }
       
+      const waApiId = String(licenceData.id_WaAPI);
+      const phoneNumber = String(userProfile.Numero_whatsapp_Bot);
+      
       const response = await waApiService.requestPairingCode(
-        licenceData.id_WaAPI, 
-        userProfile.Numero_whatsapp_Bot
+        waApiId, 
+        phoneNumber
       );
       
       setConnectionCode(response.data.data.pairingCode);
@@ -143,7 +147,8 @@ const LicenceWhatsapp = () => {
         throw new Error("ID WaAPI non trouvé");
       }
 
-      await waApiService.logout(licenceData.id_WaAPI);
+      const waApiId = String(licenceData.id_WaAPI);
+      await waApiService.logout(waApiId);
       
       // Mettre à jour le statut dans la base de données
       await waApiService.updateLicenceStatus(licenceData.id, false);
@@ -174,7 +179,8 @@ const LicenceWhatsapp = () => {
         throw new Error("ID WaAPI non trouvé");
       }
 
-      await waApiService.reboot(licenceData.id_WaAPI);
+      const waApiId = String(licenceData.id_WaAPI);
+      await waApiService.reboot(waApiId);
 
       toast({
         title: "Redémarrage effectué",
