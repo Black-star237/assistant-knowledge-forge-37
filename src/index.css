@@ -35,14 +35,16 @@
 
     --radius: 0.8rem;
 
-    --sidebar-background: 0 0% 100% / 0.65;
+    --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 222.2 84% 4.9%;
     --sidebar-primary: 204 80% 50%;
     --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 204 80% 96%;
+    --sidebar-accent: 204 100% 97%; /* Légèrement bleu pour les items non actifs */
     --sidebar-accent-foreground: 222.2 47.4% 11.2%;
     --sidebar-border: 214.3 31.8% 91.4%;
     --sidebar-ring: 204 80% 50%;
+    --sidebar-active: 142 76% 36%; /* Vert vif pour l'item actif */
+    --sidebar-active-foreground: 0 0% 100%; /* Texte blanc pour l'item actif */
   }
 
   .dark {
@@ -74,7 +76,7 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 204 80% 50%;
 
-    --sidebar-background: 222.2 84% 4.9% / 0.85;
+    --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 204 80% 50%;
     --sidebar-primary-foreground: 210 40% 98%;
@@ -82,6 +84,8 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217.2 32.6% 17.5%;
     --sidebar-ring: 204 80% 50%;
+    --sidebar-active: 142 76% 36%; /* Vert vif pour l'item actif */
+    --sidebar-active-foreground: 0 0% 100%; /* Texte blanc pour l'item actif */
   }
 }
 
@@ -122,6 +126,19 @@
   .white-card {
     @apply bg-white/80 dark:bg-black/40 border border-white/10 dark:border-white/5 backdrop-blur-sm;
   }
+
+  /* Classes personnalisées pour la barre latérale */
+  .sidebar-mobile {
+    @apply bg-white rounded-xl shadow-md;
+  }
+  
+  .sidebar-item {
+    @apply bg-blue-50 text-gray-700 hover:bg-blue-100 rounded-lg;
+  }
+  
+  .sidebar-item-active {
+    @apply bg-green-500 text-white font-medium;
+  }
 }
 
 /* Dégradé de fond pour le mode clair */
@@ -134,4 +151,21 @@
   background: linear-gradient(to bottom, rgba(20, 20, 40, 0.95) 0%, rgba(10, 10, 20, 0.98) 100%);
 }
 
-/* Ancien code commenté pour référence */
+/* Style pour la superposition de la sidebar en mode mobile */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+/* Style pour la sidebar mobile */
+[data-sidebar="sidebar"][data-mobile="true"] {
+  @apply rounded-xl bg-white;
+}
+
+/* Pour les items de navigation dans la sidebar */
+[data-sidebar="menu-button"] {
+  @apply rounded-lg my-1;
+}
