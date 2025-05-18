@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -221,11 +222,11 @@ const LicenceWhatsapp = () => {
         throw new Error("Erreur lors de la création de la commande");
       }
       
-      const dbOrderId = orderData[0].id;
+      const dbOrderId = String(orderData[0].id); // Convert to string for createPaymentSession
       
       // Call Lygos API to create payment session
       const paymentResponse = await createPaymentSession(
-        String(dbOrderId),
+        dbOrderId,
         20600, // Montant en FCFA
         `${window.location.origin}/licence-whatsapp?success=true&orderId=${dbOrderId}`,
         `${window.location.origin}/licence-whatsapp?failure=true&orderId=${dbOrderId}`
@@ -264,7 +265,7 @@ const LicenceWhatsapp = () => {
       // Verify payment with Lygos API
       const verifyPaymentStatus = async () => {
         try {
-          const verificationResponse = await verifyPayment(orderId);
+          const verificationResponse = await verifyPayment(orderId); // orderId is already a string from URL params
           
           if (verificationResponse.status === "SUCCESS" || verificationResponse.status === "PAID") {
             // Update order status in Supabase
