@@ -340,6 +340,60 @@ export type Database = {
           },
         ]
       }
+      order_status: {
+        Row: {
+          created_at: string
+          id: number
+          nom: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          nom?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          nom?: string | null
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          created_at: string
+          id: number
+          statu: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          statu?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          statu?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_statu_fkey"
+            columns: ["statu"]
+            isOneToOne: false
+            referencedRelation: "order_status"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       problemes_et_solutions: {
         Row: {
           category: string | null

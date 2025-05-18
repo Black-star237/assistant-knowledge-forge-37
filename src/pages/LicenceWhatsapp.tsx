@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { waApiService } from "@/services/waapi";
+import { createPaymentSession, verifyPayment } from "@/services/lygos";
 
 const LicenceWhatsapp = () => {
   const { toast } = useToast();
@@ -204,37 +205,41 @@ const LicenceWhatsapp = () => {
     setIsLoading(true);
 
     try {
+      if (!user?.id) {
+        throw new Error("Utilisateur non connecté");
+      }
+      
       // Generate unique ID for order
       const orderId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       
-      // Call Lygos API to create payment gateway
-      const response = await fetch("https://api.lygosapp.com/v1/gateway", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "api-key": "lygosapp-1b0aabd2-e115-4224-bc8f-254d355d62a4"
-        },
-        body: JSON.stringify({
-          amount: 20600,
-          shop_name: "bot whatsapp",
-          message: "Achat d'une licence WhatsApp",
-          success_url: `${window.location.origin}/licence-whatsapp?success=true&orderId=${orderId}`,
-          failure_url: `${window.location.origin}/licence-whatsapp?failure=true&orderId=${orderId}`,
-          order_id: orderId
+      // Create order in Supabase
+      const { data: orderData, error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          user_id: user.id,
+          statu: 1 // Statut "en attente"
         })
-      });
-
-      const data = await response.json();
+        .select();
       
-      if (!response.ok) {
-        throw new Error(data.message || "Erreur lors de la création de la passerelle de paiement");
+      if (orderError || !orderData || orderData.length === 0) {
+        throw new Error("Erreur lors de la création de la commande");
       }
-
-      console.log("Payment gateway created:", data);
+      
+      const dbOrderId = orderData[0].id;
+      
+      // Call Lygos API to create payment session
+      const paymentResponse = await createPaymentSession(
+        String(dbOrderId),
+        20600, // Montant en FCFA
+        `${window.location.origin}/licence-whatsapp?success=true&orderId=${dbOrderId}`,
+        `${window.location.origin}/licence-whatsapp?failure=true&orderId=${dbOrderId}`
+      );
+      
+      console.log("Payment session created:", paymentResponse);
       
       // Redirect to payment page
-      if (data.checkout_url) {
-        window.location.href = data.checkout_url;
+      if (paymentResponse.link) {
+        window.location.href = paymentResponse.link;
       } else {
         throw new Error("URL de paiement non trouvée dans la réponse");
       }
@@ -257,42 +262,88 @@ const LicenceWhatsapp = () => {
     const failure = urlParams.get('failure');
     const orderId = urlParams.get('orderId');
 
-    if (success === 'true' && user?.id) {
+    if (success === 'true' && orderId && user?.id) {
       console.log("Payment successful for order:", orderId);
       
-      // Update user to solvable
-      supabase
-        .from("user_profiles")
-        .update({ solvable: true })
-        .eq("id", user.id)
-        .then(({ error }) => {
-          if (error) {
-            console.error("Error updating user profile:", error);
-            toast({
-              variant: "destructive",
-              title: "Erreur",
-              description: "Impossible de mettre à jour votre profil"
-            });
-          } else {
+      // Verify payment with Lygos API
+      const verifyPaymentStatus = async () => {
+        try {
+          const verificationResponse = await verifyPayment(orderId);
+          
+          if (verificationResponse.status === "SUCCESS" || verificationResponse.status === "PAID") {
+            // Update order status in Supabase
+            await supabase
+              .from("orders")
+              .update({ statu: 3 }) // Statut "completed"
+              .eq("id", orderId);
+              
+            // Update user to solvable
+            await supabase
+              .from("user_profiles")
+              .update({ solvable: true })
+              .eq("id", user.id);
+              
             toast({
               title: "Paiement réussi",
               description: "Votre licence WhatsApp sera disponible sous peu"
             });
+            
+            // Trigger webhook to create a license
+            try {
+              await fetch("https://n8n.coolify.digit-service.org/webhook/3ff0f006-771c-44c5-b791-4e6250605a5e", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  id: orderId,
+                  table_name: "orders"
+                })
+              });
+            } catch (webhookError) {
+              console.error("Error calling webhook:", webhookError);
+            }
+            
             // Refetch data to update UI
             refetch();
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Paiement non confirmé",
+              description: "Le statut du paiement n'a pas pu être vérifié. Veuillez contacter le support."
+            });
           }
-        });
+        } catch (error) {
+          console.error("Error verifying payment:", error);
+          toast({
+            variant: "destructive",
+            title: "Erreur de vérification",
+            description: "Impossible de vérifier le statut du paiement"
+          });
+        }
+      };
+      
+      verifyPaymentStatus();
       
       // Clean URL
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (failure === 'true') {
       console.log("Payment failed for order:", orderId);
       
-      toast({
-        variant: "destructive",
-        title: "Paiement échoué",
-        description: "Le paiement n'a pas pu être traité. Veuillez réessayer."
-      });
+      // Update order status in database
+      if (orderId) {
+        supabase
+          .from("orders")
+          .update({ statu: 2 }) // Statut "failed"
+          .eq("id", orderId)
+          .then(() => {
+            toast({
+              variant: "destructive",
+              title: "Paiement échoué",
+              description: "Le paiement n'a pas pu être traité. Veuillez réessayer."
+            });
+          });
+      }
       
       // Clean URL
       window.history.replaceState({}, document.title, window.location.pathname);
