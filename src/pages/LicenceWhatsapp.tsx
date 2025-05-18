@@ -272,7 +272,7 @@ const LicenceWhatsapp = () => {
             await supabase
               .from("orders")
               .update({ statu: 3 }) // Statut "completed"
-              .eq("id", orderId);
+              .eq("id", parseInt(orderId, 10)); // Convert string to number
               
             // Update user to solvable
             await supabase
@@ -293,7 +293,7 @@ const LicenceWhatsapp = () => {
                   "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                  id: orderId,
+                  id: parseInt(orderId, 10), // Convert string to number
                   table_name: "orders"
                 })
               });
@@ -332,7 +332,7 @@ const LicenceWhatsapp = () => {
         supabase
           .from("orders")
           .update({ statu: 2 }) // Statut "failed"
-          .eq("id", orderId)
+          .eq("id", parseInt(orderId, 10)) // Convert string to number
           .then(() => {
             toast({
               variant: "destructive",
