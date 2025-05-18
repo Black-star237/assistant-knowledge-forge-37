@@ -87,11 +87,7 @@ const LicenceWhatsapp = () => {
       const response = await waApiService.getQrCode(waApiId);
       setQrCode(response.qrCode.data.qr_code);
       
-      // Assurons-nous de convertir l'ID en nombre pour updateLicenceStatus
-      if (licenceData.id) {
-        const licenceId = typeof licenceData.id === 'number' ? licenceData.id : parseInt(licenceData.id, 10);
-        await waApiService.updateLicenceStatus(licenceId, true);
-      }
+      // Nous ne modifions plus la table Licences Whatsapp directement
       refetch();
     } catch (error) {
       console.error("Error getting QR code:", error);
@@ -126,11 +122,7 @@ const LicenceWhatsapp = () => {
       
       setConnectionCode(response.data.data.pairingCode);
       
-      // Assurons-nous de convertir l'ID en nombre pour updateLicenceStatus
-      if (licenceData.id) {
-        const licenceId = typeof licenceData.id === 'number' ? licenceData.id : parseInt(licenceData.id, 10);
-        await waApiService.updateLicenceStatus(licenceId, true);
-      }
+      // Nous ne modifions plus la table Licences Whatsapp directement
       refetch();
     } catch (error) {
       console.error("Error getting pairing code:", error);
@@ -156,11 +148,7 @@ const LicenceWhatsapp = () => {
       const waApiId = String(licenceData.id_WaAPI);
       await waApiService.logout(waApiId);
       
-      // Assurons-nous de convertir l'ID en nombre pour updateLicenceStatus
-      if (licenceData.id) {
-        const licenceId = typeof licenceData.id === 'number' ? licenceData.id : parseInt(licenceData.id, 10);
-        await waApiService.updateLicenceStatus(licenceId, false);
-      }
+      // Nous ne modifions plus la table Licences Whatsapp directement
       
       toast({
         title: "Déconnexion réussie",
