@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Bell, Menu, Search, Settings, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSidebar } from "@/components/ui/sidebar";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Header() {
   const { toggleSidebar } = useSidebar();
@@ -13,7 +14,7 @@ export function Header() {
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur-sm">
+    <header className="sticky top-0 z-10 border-b border-white/10 dark:border-white/5 bg-white/50 dark:bg-black/50 backdrop-blur-lg">
       <div className="flex h-16 items-center px-4 lg:px-6">
         <Button variant="ghost" size="icon" className="md:hidden text-primary" onClick={toggleSidebar}>
           <Menu className="h-5 w-5" />
@@ -39,6 +40,8 @@ export function Header() {
             <Bell className="h-5 w-5" />
             <span className="sr-only">Notifications</span>
           </Button>
+          
+          <ThemeToggle />
           
           <Button 
             variant="ghost" 

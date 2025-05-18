@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { SidebarProvider } from "./components/ui/sidebar";
+import { ThemeProvider } from "./components/theme-provider";
 import Index from "./pages/Index";
 import Coupons from "./pages/Coupons";
 import Procedures from "./pages/Procedures";
@@ -40,30 +41,32 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <style>{sidebarStyles}</style>
-      <Toaster />
-      <Sonner />
-      <AuthProvider>
-        <SidebarProvider defaultOpen={true}>
-          <BrowserRouter>
-            <div className="mesh-bg flex min-h-screen w-full">
-              <Routes>
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/" element={<Index />} />
-                <Route path="/coupons" element={<Coupons />} />
-                <Route path="/procedures" element={<Procedures />} />
-                <Route path="/problems" element={<Problems />} />
-                <Route path="/bot-info" element={<BotInfo />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/licence-whatsapp" element={<LicenceWhatsapp />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </div>
-          </BrowserRouter>
-        </SidebarProvider>
-      </AuthProvider>
-    </TooltipProvider>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <TooltipProvider>
+        <style>{sidebarStyles}</style>
+        <Toaster />
+        <Sonner />
+        <AuthProvider>
+          <SidebarProvider defaultOpen={true}>
+            <BrowserRouter>
+              <div className="mesh-bg flex min-h-screen w-full">
+                <Routes>
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/" element={<Index />} />
+                  <Route path="/coupons" element={<Coupons />} />
+                  <Route path="/procedures" element={<Procedures />} />
+                  <Route path="/problems" element={<Problems />} />
+                  <Route path="/bot-info" element={<BotInfo />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/licence-whatsapp" element={<LicenceWhatsapp />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </div>
+            </BrowserRouter>
+          </SidebarProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
