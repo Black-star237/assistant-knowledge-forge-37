@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -88,9 +87,11 @@ const LicenceWhatsapp = () => {
       const response = await waApiService.getQrCode(waApiId);
       setQrCode(response.qrCode.data.qr_code);
       
-      // Après une connexion réussie, mettons à jour le statut
-      // Ici, nous convertissons licenceData.id en nombre car updateLicenceStatus attend un number
-      await waApiService.updateLicenceStatus(Number(licenceData.id), true);
+      // Assurons-nous de convertir l'ID en nombre pour updateLicenceStatus
+      if (licenceData.id) {
+        const licenceId = typeof licenceData.id === 'number' ? licenceData.id : parseInt(licenceData.id, 10);
+        await waApiService.updateLicenceStatus(licenceId, true);
+      }
       refetch();
     } catch (error) {
       console.error("Error getting QR code:", error);
@@ -125,9 +126,11 @@ const LicenceWhatsapp = () => {
       
       setConnectionCode(response.data.data.pairingCode);
       
-      // Après une connexion réussie, mettons à jour le statut
-      // Ici, nous convertissons licenceData.id en nombre car updateLicenceStatus attend un number
-      await waApiService.updateLicenceStatus(Number(licenceData.id), true);
+      // Assurons-nous de convertir l'ID en nombre pour updateLicenceStatus
+      if (licenceData.id) {
+        const licenceId = typeof licenceData.id === 'number' ? licenceData.id : parseInt(licenceData.id, 10);
+        await waApiService.updateLicenceStatus(licenceId, true);
+      }
       refetch();
     } catch (error) {
       console.error("Error getting pairing code:", error);
@@ -153,9 +156,11 @@ const LicenceWhatsapp = () => {
       const waApiId = String(licenceData.id_WaAPI);
       await waApiService.logout(waApiId);
       
-      // Mettre à jour le statut dans la base de données
-      // Ici, nous convertissons licenceData.id en nombre car updateLicenceStatus attend un number
-      await waApiService.updateLicenceStatus(Number(licenceData.id), false);
+      // Assurons-nous de convertir l'ID en nombre pour updateLicenceStatus
+      if (licenceData.id) {
+        const licenceId = typeof licenceData.id === 'number' ? licenceData.id : parseInt(licenceData.id, 10);
+        await waApiService.updateLicenceStatus(licenceId, false);
+      }
       
       toast({
         title: "Déconnexion réussie",
