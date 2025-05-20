@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Mail, Github, Lock, MessageCircle, User, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 
 // Interface pour les images d'arrière-plan
 interface Background {
@@ -141,8 +140,8 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Arrière-plan avec effet de transition */}
+    <div className="min-h-screen w-full flex items-center justify-center overflow-hidden">
+      {/* Arrière-plan avec effet de transition - occupe tout l'écran */}
       <div 
         className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
         style={backgroundStyle}
