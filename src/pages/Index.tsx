@@ -185,7 +185,7 @@ const Index = () => {
         <div className="flex flex-1 flex-col">
           <Header />
           <main className="flex-1 overflow-auto bg-background mesh-bg">
-            <div className="container mx-auto p-4 sm:p-6 bg-transparent">
+            <div className="container mx-auto p-4 sm:p-6 bg-[#010d01]/[0.03]">
               <div className="mb-8">
                 <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
                 <p className="text-muted-foreground">
