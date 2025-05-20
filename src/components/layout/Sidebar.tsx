@@ -38,6 +38,17 @@ export const AppSidebar = () => {
       : 'sidebar-item' // Rubriques inactives: fond bleu clair, texte noir
     }`;
 
+  // Cette fonction récupère le nom de l'utilisateur à afficher
+  const getUserDisplayName = () => {
+    // Vérifier d'abord le profil utilisateur dans les données de l'utilisateur s'il existe
+    if (user?.user_metadata?.nom) {
+      return user.user_metadata.nom;
+    }
+    
+    // Sinon, utiliser le nom de la base de données ou email comme fallback
+    return user?.email?.split('@')[0] || 'Utilisateur';
+  };
+
   return (
     <>
       {isMobile && openMobile && <div className="sidebar-overlay" />}
@@ -51,13 +62,13 @@ export const AppSidebar = () => {
           <div className={`flex ${isOpen ? 'flex-row items-center w-full gap-4' : 'flex-col'}`}>
             <Avatar className="h-11 w-11 border-2 border-orange-300">
               <AvatarFallback className="bg-orange-500 text-white font-medium">
-                {user?.email?.substring(0, 2).toUpperCase() || 'U'}
+                {getUserDisplayName().substring(0, 2).toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>
 
             {isOpen && (
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{user?.email}</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{getUserDisplayName()}</span>
                 <Button variant="link" asChild className="h-auto p-0 text-xs text-gray-700 dark:text-gray-300 hover:text-orange-500">
                   <NavLink to="/profile">Mon profil</NavLink>
                 </Button>

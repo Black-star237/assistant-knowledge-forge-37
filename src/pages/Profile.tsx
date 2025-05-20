@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -88,32 +87,59 @@ const ProfilePage = () => {
   const handleImageUpload = async (file: File): Promise<string | null> => {
     if (!user) return null;
     setIsUploading(true);
-    const fileName = `${Date.now()}_${file.name}`;
-    const filePath = `${user.id}/${fileName}`;
+    
+    try {
+      // Créer un nom de fichier unique avec l'extension du fichier d'origine
+      const fileExt = file.name.split('.').pop();
+      const timestamp = Date.now();
+      const fileName = `${timestamp}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+      
+      console.log('Uploading file:', filePath);
 
-    const { error: uploadError } = await supabase.storage
-      .from('profile-photos')
-      .upload(filePath, file, {
+      const { error: uploadError } = await supabase.storage
+        .from('profile-photos')
+        .upload(filePath, file, {
           cacheControl: '3600',
           upsert: true, 
-      });
+        });
 
-    setIsUploading(false);
-    if (uploadError) {
-      console.error('Error uploading image:', uploadError);
-      toast({ title: 'Erreur d\'upload', description: uploadError.message, variant: 'destructive' });
-      return null;
-    }
-
-    const { data: publicUrlData } = supabase.storage
-      .from('profile-photos')
-      .getPublicUrl(filePath);
-    
-    if (!publicUrlData?.publicUrl) {
-        toast({ title: 'Erreur', description: "Impossible d'obtenir l'URL publique de l'image.", variant: 'destructive'});
+      if (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        toast({ 
+          title: 'Erreur d\'upload', 
+          description: uploadError.message, 
+          variant: 'destructive' 
+        });
         return null;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from('profile-photos')
+        .getPublicUrl(filePath);
+      
+      if (!publicUrlData?.publicUrl) {
+        toast({ 
+          title: 'Erreur', 
+          description: "Impossible d'obtenir l'URL publique de l'image.", 
+          variant: 'destructive'
+        });
+        return null;
+      }
+      
+      console.log('File uploaded successfully:', publicUrlData.publicUrl);
+      return publicUrlData.publicUrl;
+    } catch (error) {
+      console.error('Unexpected error during upload:', error);
+      toast({ 
+        title: 'Erreur', 
+        description: "Une erreur inattendue s'est produite pendant l'upload.", 
+        variant: 'destructive' 
+      });
+      return null;
+    } finally {
+      setIsUploading(false);
     }
-    return publicUrlData.publicUrl;
   };
 
   const onSubmit = async (values: ProfileFormValues) => {
@@ -148,6 +174,17 @@ const ProfilePage = () => {
       "Photo de profile": imageUrl,
       // 'Offre' is not included, so it won't be updated.
     };
+
+    // Mise à jour des user_metadata également pour que le nom s'affiche dans la sidebar
+    if (values.nom) {
+      try {
+        await supabase.auth.updateUser({
+          data: { nom: values.nom }
+        });
+      } catch (error) {
+        console.error('Error updating user metadata:', error);
+      }
+    }
 
     const { error } = await supabase
       .from('user_profiles')
@@ -186,8 +223,7 @@ const ProfilePage = () => {
     );
   }
   
-  const fallbackName = profile?.nom || user.email || "Utilisateur";
-
+  const fallbackName = profile?.nom || user.email?.split('@')[0] || "Utilisateur";
 
   return (
     <SidebarProvider>
