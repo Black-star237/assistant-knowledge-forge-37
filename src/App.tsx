@@ -30,7 +30,7 @@ const App = () => (
         <AuthProvider>
           <SidebarProvider defaultOpen={true}>
             <BrowserRouter>
-              <div className="flex min-h-screen w-full">
+              <div className="flex min-h-screen w-full bg-transparent">
                 <Routes>
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/" element={<Index />} />

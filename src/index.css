@@ -152,6 +152,16 @@
     @apply bg-orange-200 dark:bg-orange-300/50 text-black font-medium;
   }
   
+  /* Nouvelle classe pour les conteneurs principaux de pages */
+  .page-container {
+    @apply bg-transparent;
+  }
+  
+  /* Classe pour les cartes avec effet glassmorphism */
+  .glass-card {
+    @apply bg-white/10 dark:bg-black/30 backdrop-blur-lg border border-white/20 dark:border-white/5 shadow-md;
+  }
+  
   .mesh-bg {
     background-color: transparent;
   }

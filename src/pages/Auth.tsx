@@ -146,11 +146,11 @@ const Auth = () => {
         className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
         style={backgroundStyle}
       >
-        {/* Overlay pour l'effet flou/sombre */}
+        {/* Overlay avec effet blur amélioré */}
         <div className="absolute inset-0 backdrop-blur-sm bg-black/50" />
       </div>
 
-      {/* Carte d'authentification centrée */}
+      {/* Carte d'authentification avec glassmorphism amélioré */}
       <Card className="w-full max-w-md bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl relative z-10 mx-4">
         <CardContent className="p-8">
           <div className="flex items-center mb-8 justify-center">

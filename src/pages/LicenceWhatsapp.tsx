@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -326,8 +325,8 @@ const LicenceWhatsapp = () => {
         <AppSidebar />
         <div className="flex flex-1 flex-col">
           <Header />
-          <main className="flex-1 overflow-auto bg-background">
-            <div className="container mx-auto p-4 sm:p-6">
+          <main className="flex-1 overflow-auto bg-transparent mesh-bg">
+            <div className="container mx-auto p-4 sm:p-6 bg-transparent">
               <div className="mb-8">
                 <h1 className="text-3xl font-bold tracking-tight">Licence WhatsApp</h1>
                 <p className="text-muted-foreground">
@@ -340,7 +339,7 @@ const LicenceWhatsapp = () => {
                   <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
               ) : isUserWaiting ? (
-                <Card className="w-full max-w-3xl mx-auto">
+                <Card className="w-full max-w-3xl mx-auto white-card">
                   <CardHeader>
                     <CardTitle className="text-xl">Mise en place de votre assistant</CardTitle>
                   </CardHeader>
@@ -372,7 +371,7 @@ const LicenceWhatsapp = () => {
                   </CardContent>
                 </Card>
               ) : licenceData ? (
-                <Card className="w-full max-w-3xl mx-auto">
+                <Card className="w-full max-w-3xl mx-auto white-card">
                   <CardHeader>
                     <CardTitle className="text-xl">
                       {licenceData.Nom || "Licence WhatsApp"}
@@ -486,7 +485,7 @@ const LicenceWhatsapp = () => {
                   </CardFooter>
                 </Card>
               ) : (
-                <Card className="w-full max-w-xl mx-auto text-center">
+                <Card className="w-full max-w-xl mx-auto white-card text-center">
                   <CardHeader>
                     <CardTitle>Aucune licence WhatsApp</CardTitle>
                   </CardHeader>
