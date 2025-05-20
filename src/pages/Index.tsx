@@ -1,4 +1,3 @@
-
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { StatsOverview } from "@/components/dashboard/StatsOverview";
@@ -14,68 +13,74 @@ import { fr } from 'date-fns/locale';
 
 // Define a type for valid table names we are querying
 type ValidTableName = Extract<keyof Database['public']['Tables'], 'coupons' | 'procedures' | 'problemes_et_solutions' | 'informations_bot' | 'code_promo' | 'liens_utiles' | 'regles' | 'messages_whatsapp' | 'contacts'>;
-
 interface StatSummary {
   count: number;
   latestCreatedAt: string | null;
 }
-
 const fetchStatSummary = async (tableName: ValidTableName): Promise<StatSummary> => {
-  const { count, error: countError } = await supabase
-    .from(tableName)
-    .select('*', { count: 'exact', head: true });
-
+  const {
+    count,
+    error: countError
+  } = await supabase.from(tableName).select('*', {
+    count: 'exact',
+    head: true
+  });
   if (countError) {
     console.error(`Error fetching count for ${tableName}:`, countError);
     // Fallback or rethrow, for now, log and return partial if possible
   }
-
-  const { data: latestEntry, error: latestEntryError } = await supabase
-    .from(tableName)
-    .select('created_at') // We are only selecting 'created_at'
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle<{ created_at: string }>(); // Explicitly type the expected shape of selected data
+  const {
+    data: latestEntry,
+    error: latestEntryError
+  } = await supabase.from(tableName).select('created_at') // We are only selecting 'created_at'
+  .order('created_at', {
+    ascending: false
+  }).limit(1).maybeSingle<{
+    created_at: string;
+  }>(); // Explicitly type the expected shape of selected data
 
   if (latestEntryError) {
     console.error(`Error fetching latest entry for ${tableName}:`, latestEntryError);
   }
-  
   return {
     count: count ?? 0,
-    latestCreatedAt: latestEntry?.created_at ?? null,
+    latestCreatedAt: latestEntry?.created_at ?? null
   };
 };
 
 // Nouvelle fonction pour récupérer les statistiques d'activité
 const fetchActivityStats = async () => {
   // Messages avec envoyé = true (conversations réussies)
-  const { count: successfulCount, error: successfulError } = await supabase
-    .from('messages_whatsapp')
-    .select('*', { count: 'exact', head: true })
-    .eq('envoyé', true);
-
+  const {
+    count: successfulCount,
+    error: successfulError
+  } = await supabase.from('messages_whatsapp').select('*', {
+    count: 'exact',
+    head: true
+  }).eq('envoyé', true);
   if (successfulError) console.error("Error fetching successful conversations:", successfulError);
 
   // Messages avec envoyé = false (conversations en cours)
-  const { count: inProgressCount, error: inProgressError } = await supabase
-    .from('messages_whatsapp')
-    .select('*', { count: 'exact', head: true })
-    .eq('envoyé', false);
-
+  const {
+    count: inProgressCount,
+    error: inProgressError
+  } = await supabase.from('messages_whatsapp').select('*', {
+    count: 'exact',
+    head: true
+  }).eq('envoyé', false);
   if (inProgressError) console.error("Error fetching in-progress conversations:", inProgressError);
 
   // Nouveaux contacts des 7 derniers jours
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-  
-  const { count: newClientsCount, error: newClientsError } = await supabase
-    .from('contacts')
-    .select('*', { count: 'exact', head: true })
-    .gte('created_at', oneWeekAgo.toISOString());
-
+  const {
+    count: newClientsCount,
+    error: newClientsError
+  } = await supabase.from('contacts').select('*', {
+    count: 'exact',
+    head: true
+  }).gte('created_at', oneWeekAgo.toISOString());
   if (newClientsError) console.error("Error fetching new clients:", newClientsError);
-
   return {
     successful: successfulCount ?? 0,
     inProgress: inProgressCount ?? 0,
@@ -85,24 +90,30 @@ const fetchActivityStats = async () => {
 
 // Nouvelle fonction pour récupérer les informations bot détaillées
 const fetchBotInfoDetails = async () => {
-  const { count: codePromoCount, error: codePromoError } = await supabase
-    .from('code_promo')
-    .select('*', { count: 'exact', head: true });
-
+  const {
+    count: codePromoCount,
+    error: codePromoError
+  } = await supabase.from('code_promo').select('*', {
+    count: 'exact',
+    head: true
+  });
   if (codePromoError) console.error("Error fetching code promo count:", codePromoError);
-
-  const { count: liensCount, error: liensError } = await supabase
-    .from('liens_utiles')
-    .select('*', { count: 'exact', head: true });
-
+  const {
+    count: liensCount,
+    error: liensError
+  } = await supabase.from('liens_utiles').select('*', {
+    count: 'exact',
+    head: true
+  });
   if (liensError) console.error("Error fetching liens count:", liensError);
-
-  const { count: reglesCount, error: reglesError } = await supabase
-    .from('regles')
-    .select('*', { count: 'exact', head: true });
-
+  const {
+    count: reglesCount,
+    error: reglesError
+  } = await supabase.from('regles').select('*', {
+    count: 'exact',
+    head: true
+  });
   if (reglesError) console.error("Error fetching regles count:", reglesError);
-
   return {
     codePromoCount: codePromoCount ?? 0,
     liensCount: liensCount ?? 0,
@@ -110,7 +121,6 @@ const fetchBotInfoDetails = async () => {
     totalCount: (codePromoCount ?? 0) + (liensCount ?? 0) + (reglesCount ?? 0)
   };
 };
-
 const formatCardFooterText = (itemType: string, data?: StatSummary, isLoading?: boolean) => {
   if (isLoading) {
     return <span className="flex items-center"><Loader2 className="h-3 w-3 animate-spin mr-1" />Chargement...</span>;
@@ -121,7 +131,10 @@ const formatCardFooterText = (itemType: string, data?: StatSummary, isLoading?: 
   let text = `${data.count} ${itemType}${data.count > 1 ? 's' : ''}`;
   if (data.latestCreatedAt) {
     try {
-      text += ` • Dernier ajout ${formatDistanceToNow(new Date(data.latestCreatedAt), { addSuffix: true, locale: fr })}`;
+      text += ` • Dernier ajout ${formatDistanceToNow(new Date(data.latestCreatedAt), {
+        addSuffix: true,
+        locale: fr
+      })}`;
     } catch (e) {
       console.error("Error formatting date for card footer:", data.latestCreatedAt, e);
       text += ` • Date invalide`;
@@ -129,29 +142,27 @@ const formatCardFooterText = (itemType: string, data?: StatSummary, isLoading?: 
   }
   return text;
 };
-
 const Index = () => {
   // Récupération des statistiques du tableau de bord
-  const { data: dashboardData, isLoading: isLoadingDashboardData } = useQuery({
+  const {
+    data: dashboardData,
+    isLoading: isLoadingDashboardData
+  } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: async () => {
       // Ensure table names match ValidTableName types
-      const [coupons, procedures, problems] = await Promise.all([
-        fetchStatSummary('coupons'),
-        fetchStatSummary('procedures'), 
-        fetchStatSummary('problemes_et_solutions')
-      ]);
+      const [coupons, procedures, problems] = await Promise.all([fetchStatSummary('coupons'), fetchStatSummary('procedures'), fetchStatSummary('problemes_et_solutions')]);
 
       // Récupération des détails pour informations bot
       const botInfoDetails = await fetchBotInfoDetails();
-
-      return { 
-        coupons, 
-        procedures, 
-        problems, 
+      return {
+        coupons,
+        procedures,
+        problems,
         botInfo: {
           count: botInfoDetails.totalCount,
-          latestCreatedAt: null, // Pas utilisé pour ce cas
+          latestCreatedAt: null,
+          // Pas utilisé pour ce cas
           codePromoCount: botInfoDetails.codePromoCount,
           liensCount: botInfoDetails.liensCount,
           reglesCount: botInfoDetails.reglesCount
@@ -161,19 +172,20 @@ const Index = () => {
   });
 
   // Récupération des statistiques d'activité
-  const { data: activityStats, isLoading: isLoadingActivityStats } = useQuery({
+  const {
+    data: activityStats,
+    isLoading: isLoadingActivityStats
+  } = useQuery({
     queryKey: ['activityStats'],
     queryFn: fetchActivityStats
   });
-
-  return (
-    <SidebarProvider>
+  return <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <div className="flex flex-1 flex-col">
           <Header />
           <main className="flex-1 overflow-auto bg-background mesh-bg">
-            <div className="container mx-auto p-4 sm:p-6">
+            <div className="container mx-auto p-4 sm:p-6 bg-[#010d01]/[0.03]">
               <div className="mb-8">
                 <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
                 <p className="text-muted-foreground">
@@ -228,12 +240,10 @@ const Index = () => {
               <section>
                 <h2 className="mb-4 text-xl font-semibold">Gestion de l'assistant</h2>
                 <div className="grid gap-6 grid-cols-2 md:grid-cols-2 lg:grid-cols-2 transparent-grid">
-                  <DashboardCard
-                    title="Coupons"
-                    description="Paris disponibles pour vos clients"
-                    icon={<Bookmark className="h-4 w-4" />}
-                    footerAction={{ label: "Gérer les coupons", href: "/coupons" }}
-                  >
+                  <DashboardCard title="Coupons" description="Paris disponibles pour vos clients" icon={<Bookmark className="h-4 w-4" />} footerAction={{
+                  label: "Gérer les coupons",
+                  href: "/coupons"
+                }}>
                     <div className="space-y-3">
                       <p className="text-sm">
                         Ajoutez et gérez les coupons de paris que votre assistant pourra partager avec vos clients.
@@ -244,12 +254,10 @@ const Index = () => {
                     </div>
                   </DashboardCard>
 
-                  <DashboardCard
-                    title="Procédures"
-                    description="Guides pour vos clients"
-                    icon={<FileText className="h-4 w-4" />}
-                    footerAction={{ label: "Gérer les procédures", href: "/procedures" }}
-                  >
+                  <DashboardCard title="Procédures" description="Guides pour vos clients" icon={<FileText className="h-4 w-4" />} footerAction={{
+                  label: "Gérer les procédures",
+                  href: "/procedures"
+                }}>
                     <div className="space-y-3">
                       <p className="text-sm">
                         Créez des procédures étape par étape que votre assistant utilisera pour guider vos clients.
@@ -260,12 +268,10 @@ const Index = () => {
                     </div>
                   </DashboardCard>
 
-                  <DashboardCard
-                    title="Problèmes & Solutions"
-                    description="FAQ et dépannage"
-                    icon={<HelpCircle className="h-4 w-4" />}
-                    footerAction={{ label: "Gérer les solutions", href: "/problems" }}
-                  >
+                  <DashboardCard title="Problèmes & Solutions" description="FAQ et dépannage" icon={<HelpCircle className="h-4 w-4" />} footerAction={{
+                  label: "Gérer les solutions",
+                  href: "/problems"
+                }}>
                     <div className="space-y-3">
                       <p className="text-sm">
                         Recensez les problèmes fréquents et leurs solutions pour que votre assistant puisse aider efficacement.
@@ -276,31 +282,23 @@ const Index = () => {
                     </div>
                   </DashboardCard>
 
-                  <DashboardCard
-                    title="Informations Bot"
-                    description="Configuration de l'assistant"
-                    icon={<Info className="h-4 w-4" />}
-                    footerAction={{ label: "Gérer les informations", href: "/bot-info" }}
-                  >
+                  <DashboardCard title="Informations Bot" description="Configuration de l'assistant" icon={<Info className="h-4 w-4" />} footerAction={{
+                  label: "Gérer les informations",
+                  href: "/bot-info"
+                }}>
                     <div className="space-y-3">
                       <p className="text-sm">
                         Ajoutez des informations supplémentaires comme des codes promos, liens et exemples de conversations.
                       </p>
                       <div className="text-xs text-muted-foreground">
-                        {isLoadingDashboardData ? (
-                          <span className="flex items-center"><Loader2 className="h-3 w-3 animate-spin mr-1" />Chargement...</span>
-                        ) : (
-                          <>
-                            {dashboardData?.botInfo ? (
-                              <>
+                        {isLoadingDashboardData ? <span className="flex items-center"><Loader2 className="h-3 w-3 animate-spin mr-1" />Chargement...</span> : <>
+                            {dashboardData?.botInfo ? <>
                                 {dashboardData.botInfo.count} infos • 
                                 {dashboardData.botInfo.codePromoCount} codes promo •
                                 {dashboardData.botInfo.liensCount} liens •
                                 {dashboardData.botInfo.reglesCount} règles
-                              </>
-                            ) : "Aucune information"}
-                          </>
-                        )}
+                              </> : "Aucune information"}
+                          </>}
                       </div>
                     </div>
                   </DashboardCard>
@@ -310,8 +308,6 @@ const Index = () => {
           </main>
         </div>
       </div>
-    </SidebarProvider>
-  );
+    </SidebarProvider>;
 };
-
 export default Index;
