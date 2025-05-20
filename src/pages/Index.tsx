@@ -5,15 +5,15 @@ import { StatsOverview } from "@/components/dashboard/StatsOverview";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { FileText, Bookmark, HelpCircle, Info, MessageSquare, Loader2 } from "lucide-react";
+import { FileText, Bookmark, HelpCircle, Info, MessageSquare, Loader2, CircleCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 // Define a type for valid table names we are querying
-type ValidTableName = Extract<keyof Database['public']['Tables'], 'coupons' | 'procedures' | 'problemes_et_solutions' | 'informations_bot'>;
+type ValidTableName = Extract<keyof Database['public']['Tables'], 'coupons' | 'procedures' | 'problemes_et_solutions' | 'informations_bot' | 'code_promo' | 'liens_utiles' | 'regles' | 'messages_whatsapp' | 'contacts'>;
 
 interface StatSummary {
   count: number;
@@ -47,6 +47,70 @@ const fetchStatSummary = async (tableName: ValidTableName): Promise<StatSummary>
   };
 };
 
+// Nouvelle fonction pour récupérer les statistiques d'activité
+const fetchActivityStats = async () => {
+  // Messages avec envoyé = true (conversations réussies)
+  const { count: successfulCount, error: successfulError } = await supabase
+    .from('messages_whatsapp')
+    .select('*', { count: 'exact', head: true })
+    .eq('envoyé', true);
+
+  if (successfulError) console.error("Error fetching successful conversations:", successfulError);
+
+  // Messages avec envoyé = false (conversations en cours)
+  const { count: inProgressCount, error: inProgressError } = await supabase
+    .from('messages_whatsapp')
+    .select('*', { count: 'exact', head: true })
+    .eq('envoyé', false);
+
+  if (inProgressError) console.error("Error fetching in-progress conversations:", inProgressError);
+
+  // Nouveaux contacts des 7 derniers jours
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  
+  const { count: newClientsCount, error: newClientsError } = await supabase
+    .from('contacts')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', oneWeekAgo.toISOString());
+
+  if (newClientsError) console.error("Error fetching new clients:", newClientsError);
+
+  return {
+    successful: successfulCount ?? 0,
+    inProgress: inProgressCount ?? 0,
+    newClients: newClientsCount ?? 0
+  };
+};
+
+// Nouvelle fonction pour récupérer les informations bot détaillées
+const fetchBotInfoDetails = async () => {
+  const { count: codePromoCount, error: codePromoError } = await supabase
+    .from('code_promo')
+    .select('*', { count: 'exact', head: true });
+
+  if (codePromoError) console.error("Error fetching code promo count:", codePromoError);
+
+  const { count: liensCount, error: liensError } = await supabase
+    .from('liens_utiles')
+    .select('*', { count: 'exact', head: true });
+
+  if (liensError) console.error("Error fetching liens count:", liensError);
+
+  const { count: reglesCount, error: reglesError } = await supabase
+    .from('regles')
+    .select('*', { count: 'exact', head: true });
+
+  if (reglesError) console.error("Error fetching regles count:", reglesError);
+
+  return {
+    codePromoCount: codePromoCount ?? 0,
+    liensCount: liensCount ?? 0,
+    reglesCount: reglesCount ?? 0,
+    totalCount: (codePromoCount ?? 0) + (liensCount ?? 0) + (reglesCount ?? 0)
+  };
+};
+
 const formatCardFooterText = (itemType: string, data?: StatSummary, isLoading?: boolean) => {
   if (isLoading) {
     return <span className="flex items-center"><Loader2 className="h-3 w-3 animate-spin mr-1" />Chargement...</span>;
@@ -67,18 +131,39 @@ const formatCardFooterText = (itemType: string, data?: StatSummary, isLoading?: 
 };
 
 const Index = () => {
+  // Récupération des statistiques du tableau de bord
   const { data: dashboardData, isLoading: isLoadingDashboardData } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: async () => {
       // Ensure table names match ValidTableName types
-      const [coupons, procedures, problems, botInfo] = await Promise.all([
+      const [coupons, procedures, problems] = await Promise.all([
         fetchStatSummary('coupons'),
         fetchStatSummary('procedures'), 
-        fetchStatSummary('problemes_et_solutions'),
-        fetchStatSummary('informations_bot'),
+        fetchStatSummary('problemes_et_solutions')
       ]);
-      return { coupons, procedures, problems, botInfo };
+
+      // Récupération des détails pour informations bot
+      const botInfoDetails = await fetchBotInfoDetails();
+
+      return { 
+        coupons, 
+        procedures, 
+        problems, 
+        botInfo: {
+          count: botInfoDetails.totalCount,
+          latestCreatedAt: null, // Pas utilisé pour ce cas
+          codePromoCount: botInfoDetails.codePromoCount,
+          liensCount: botInfoDetails.liensCount,
+          reglesCount: botInfoDetails.reglesCount
+        }
+      };
     }
+  });
+
+  // Récupération des statistiques d'activité
+  const { data: activityStats, isLoading: isLoadingActivityStats } = useQuery({
+    queryKey: ['activityStats'],
+    queryFn: fetchActivityStats
   });
 
   return (
@@ -110,35 +195,29 @@ const Index = () => {
                     <div>
                       <h3 className="font-medium">Votre assistant est actif</h3>
                       <p className="text-sm text-muted-foreground">
-                        Il a répondu à <span className="font-medium">28 messages</span> ces dernières 24 heures
+                        Il a répondu à <span className="font-medium">{activityStats?.successful ?? 0} messages</span> ces dernières 24 heures
                       </p>
                     </div>
                   </div>
                   
                   <div className="mt-6 space-y-4">
-                    <div className="grid gap-2 grid-cols-2 sm:grid-cols-2 md:grid-cols-4 transparent-grid">
+                    <div className="grid gap-2 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 transparent-grid">
                       <div className="flex items-center gap-2 rounded-lg border border-white/20 dark:border-white/10 p-4 bg-white dark:bg-black/40 shadow-sm">
                         <div className="h-2 w-2 rounded-full bg-green-500"></div>
                         <div className="text-sm">
-                          <span className="font-medium">24</span> conversations réussies
+                          <span className="font-medium">{isLoadingActivityStats ? <Loader2 className="h-3 w-3 inline animate-spin" /> : activityStats?.successful}</span> conversations réussies
                         </div>
                       </div>
                       <div className="flex items-center gap-2 rounded-lg border border-white/20 dark:border-white/10 p-4 bg-white dark:bg-black/40 shadow-sm">
                         <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
                         <div className="text-sm">
-                          <span className="font-medium">3</span> conversations transférées
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 rounded-lg border border-white/20 dark:border-white/10 p-4 bg-white dark:bg-black/40 shadow-sm">
-                        <div className="h-2 w-2 rounded-full bg-red-500"></div>
-                        <div className="text-sm">
-                          <span className="font-medium">1</span> conversations échouées
+                          <span className="font-medium">{isLoadingActivityStats ? <Loader2 className="h-3 w-3 inline animate-spin" /> : activityStats?.inProgress}</span> conversations en cours
                         </div>
                       </div>
                       <div className="flex items-center gap-2 rounded-lg border border-white/20 dark:border-white/10 p-4 bg-white dark:bg-black/40 shadow-sm">
                         <div className="h-2 w-2 rounded-full bg-blue-500"></div>
                         <div className="text-sm">
-                          <span className="font-medium">5</span> nouveaux clients
+                          <span className="font-medium">{isLoadingActivityStats ? <Loader2 className="h-3 w-3 inline animate-spin" /> : activityStats?.newClients}</span> nouveaux clients
                         </div>
                       </div>
                     </div>
@@ -208,7 +287,20 @@ const Index = () => {
                         Ajoutez des informations supplémentaires comme des codes promos, liens et exemples de conversations.
                       </p>
                       <div className="text-xs text-muted-foreground">
-                        {formatCardFooterText("info", dashboardData?.botInfo, isLoadingDashboardData)}
+                        {isLoadingDashboardData ? (
+                          <span className="flex items-center"><Loader2 className="h-3 w-3 animate-spin mr-1" />Chargement...</span>
+                        ) : (
+                          <>
+                            {dashboardData?.botInfo ? (
+                              <>
+                                {dashboardData.botInfo.count} infos • 
+                                {dashboardData.botInfo.codePromoCount} codes promo •
+                                {dashboardData.botInfo.liensCount} liens •
+                                {dashboardData.botInfo.reglesCount} règles
+                              </>
+                            ) : "Aucune information"}
+                          </>
+                        )}
                       </div>
                     </div>
                   </DashboardCard>

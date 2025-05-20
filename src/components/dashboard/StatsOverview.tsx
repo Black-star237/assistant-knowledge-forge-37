@@ -64,7 +64,13 @@ interface DashboardStatsData {
   coupons: { count: number; latestCreatedAt: string | null };
   procedures: { count: number; latestCreatedAt: string | null };
   problems: { count: number; latestCreatedAt: string | null };
-  botInfo: { count: number; latestCreatedAt: string | null };
+  botInfo: { 
+    count: number; 
+    latestCreatedAt: string | null;
+    codePromoCount: number;
+    liensCount: number;
+    reglesCount: number;
+  };
 }
 
 interface StatsOverviewProps {
@@ -114,7 +120,9 @@ export function StatsOverview({ data, isLoading }: StatsOverviewProps) {
     {
       title: "Informations Bot",
       value: data?.botInfo?.count ?? 0,
-      change: data?.botInfo?.latestCreatedAt ? getChangeText(data.botInfo.latestCreatedAt) : (isLoading ? "" : "N/A"),
+      change: data?.botInfo?.count ? 
+        `Code promo: ${data.botInfo.codePromoCount} • Liens: ${data.botInfo.liensCount} • Règles: ${data.botInfo.reglesCount}` : 
+        (isLoading ? "" : "N/A"),
       changeType: "neutral" as const,
       icon: <Info size={16} />,
       description: "Données complémentaires",
