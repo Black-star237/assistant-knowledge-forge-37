@@ -131,11 +131,21 @@ export const waApiService = {
    * Met à jour le statut de connexion d'une licence dans la base de données
    * @param licenceId ID de la licence
    * @param isConnected Statut de connexion
+   * @param status Statut à afficher (optionnel)
    */
-  async updateLicenceStatus(licenceId: number, isConnected: boolean): Promise<void> {
+  async updateLicenceStatus(licenceId: number, isConnected: boolean, status?: string): Promise<void> {
+    const updateData: { n8n_connected: boolean; statu?: string } = { 
+      n8n_connected: isConnected 
+    };
+    
+    // Si un statut est fourni, l'ajouter aux données de mise à jour
+    if (status) {
+      updateData.statu = status;
+    }
+    
     const { error } = await supabase
       .from("Licences Whatsapp")
-      .update({ n8n_connected: isConnected })
+      .update(updateData)
       .eq("id", licenceId);
       
     if (error) {

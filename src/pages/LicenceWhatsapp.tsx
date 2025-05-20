@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -87,7 +88,7 @@ const LicenceWhatsapp = () => {
       setQrCode(response.qrCode.data.qr_code);
       
       // Après une connexion réussie, mettons à jour le statut
-      await waApiService.updateLicenceStatus(licenceData.id, true);
+      await waApiService.updateLicenceStatus(licenceData.id, true, "Connecté");
       refetch();
     } catch (error) {
       console.error("Error getting QR code:", error);
@@ -123,7 +124,7 @@ const LicenceWhatsapp = () => {
       setConnectionCode(response.data.data.pairingCode);
       
       // Après une connexion réussie, mettons à jour le statut
-      await waApiService.updateLicenceStatus(licenceData.id, true);
+      await waApiService.updateLicenceStatus(licenceData.id, true, "Connecté");
       refetch();
     } catch (error) {
       console.error("Error getting pairing code:", error);
@@ -150,7 +151,7 @@ const LicenceWhatsapp = () => {
       await waApiService.logout(waApiId);
       
       // Mettre à jour le statut dans la base de données
-      await waApiService.updateLicenceStatus(licenceData.id, false);
+      await waApiService.updateLicenceStatus(licenceData.id, false, "Déconnecté");
       
       toast({
         title: "Déconnexion réussie",
@@ -180,6 +181,9 @@ const LicenceWhatsapp = () => {
 
       const waApiId = String(licenceData.id_WaAPI);
       await waApiService.reboot(waApiId);
+      
+      // Mettre à jour le statut dans la base de données
+      await waApiService.updateLicenceStatus(licenceData.id, true, "Redémarré");
 
       toast({
         title: "Redémarrage effectué",
@@ -303,14 +307,18 @@ const LicenceWhatsapp = () => {
       return (
         <div className="flex items-center">
           <Check className="h-5 w-5 text-green-500 mr-2" />
-          <span className="text-green-500 font-medium">Connecté</span>
+          <span className="text-green-500 font-medium">
+            {licenceData.statu || "Connecté"}
+          </span>
         </div>
       );
     } else {
       return (
         <div className="flex items-center">
           <X className="h-5 w-5 text-red-500 mr-2" />
-          <span className="text-red-500 font-medium">Déconnecté</span>
+          <span className="text-red-500 font-medium">
+            {licenceData?.statu || "Déconnecté"}
+          </span>
         </div>
       );
     }
