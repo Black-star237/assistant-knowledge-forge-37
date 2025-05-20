@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -76,7 +75,7 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 204 80% 50%;
 
-    --sidebar-background: 0 0% 100%;
+    --sidebar-background: 240 10% 15%; /* Fond sombre pour la sidebar */
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 204 80% 50%;
     --sidebar-primary-foreground: 210 40% 98%;
@@ -129,11 +128,11 @@
 
   /* Classes personnalisées pour la barre latérale */
   .sidebar-mobile {
-    @apply bg-white rounded-xl shadow-md;
+    @apply bg-white dark:bg-gray-900 rounded-xl shadow-md;
   }
   
   .sidebar-item {
-    @apply bg-blue-50 text-gray-700;
+    @apply bg-blue-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200;
   }
   
   .sidebar-item-active {
@@ -162,7 +161,7 @@
 
 /* Style pour la sidebar mobile */
 [data-sidebar="sidebar"][data-mobile="true"] {
-  @apply rounded-xl bg-white;
+  @apply rounded-xl bg-white dark:bg-gray-900;
 }
 
 /* Pour les items de navigation dans la sidebar */

@@ -42,10 +42,9 @@ export const AppSidebar = () => {
     <>
       {isMobile && openMobile && <div className="sidebar-overlay" />}
       <Sidebar
-        className="bg-white rounded-xl shadow-lg border-none"
-        collapsible="icon"
+        className="bg-white dark:bg-gray-900 rounded-xl shadow-lg border-none"
       >
-        <SidebarTrigger className="m-2 self-end text-gray-700 hover:text-green-500" />
+        <SidebarTrigger className="m-2 self-end text-gray-700 dark:text-gray-300 hover:text-green-500" />
 
         {/* Avatar utilisateur */}
         <div className={`p-4 ${isOpen ? 'items-start' : 'items-center'} flex flex-col mb-3`}>  
@@ -58,8 +57,8 @@ export const AppSidebar = () => {
 
             {isOpen && (
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-gray-700">{user?.email}</span>
-                <Button variant="link" asChild className="h-auto p-0 text-xs text-gray-700 hover:text-green-500">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{user?.email}</span>
+                <Button variant="link" asChild className="h-auto p-0 text-xs text-gray-700 dark:text-gray-300 hover:text-green-500">
                   <NavLink to="/profile">Mon profil</NavLink>
                 </Button>
               </div>
@@ -69,14 +68,14 @@ export const AppSidebar = () => {
 
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel className="text-gray-700 font-medium">Navigation</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-gray-700 dark:text-gray-300 font-medium">Navigation</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {mainItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <NavLink to={item.url} className={getNavLinkClass} end>
-                        <item.icon className={`h-5 w-5 ${location.pathname === item.url ? 'text-white' : 'text-gray-700'}`} />
+                        <item.icon className={`h-5 w-5 ${location.pathname === item.url ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`} />
                         {isOpen && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
@@ -91,7 +90,7 @@ export const AppSidebar = () => {
           <div className="mt-auto p-2 mb-3">
             <SidebarMenuButton asChild>
               <NavLink to="/profile" className={getNavLinkClass}>
-                <User className="h-5 w-5 text-gray-700" />
+                <User className="h-5 w-5 text-gray-700 dark:text-gray-300" />
               </NavLink>
             </SidebarMenuButton>
           </div>
