@@ -136,20 +136,24 @@
   }
   
   .white-card {
-    @apply bg-white/80 dark:bg-black/40 border border-white/10 dark:border-white/5 backdrop-blur-sm;
+    @apply bg-white/20 dark:bg-black/40 border border-white/10 dark:border-white/5 backdrop-blur-sm;
   }
 
   /* Classes personnalisées pour la barre latérale */
   .sidebar-mobile {
-    @apply bg-white dark:bg-gray-900 rounded-xl shadow-md;
+    @apply bg-white/90 dark:bg-gray-900/90 rounded-xl shadow-md backdrop-blur-md;
   }
   
   .sidebar-item {
-    @apply bg-blue-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200;
+    @apply bg-blue-50/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-200 backdrop-blur-sm;
   }
   
   .sidebar-item-active {
     @apply bg-orange-200 dark:bg-orange-300/50 text-black font-medium;
+  }
+  
+  .mesh-bg {
+    background-color: transparent;
   }
 }
 
@@ -164,7 +168,7 @@
 
 /* Style pour la sidebar mobile */
 [data-sidebar="sidebar"][data-mobile="true"] {
-  @apply rounded-xl bg-white dark:bg-gray-900;
+  @apply rounded-xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-md;
 }
 
 /* Pour les items de navigation dans la sidebar */

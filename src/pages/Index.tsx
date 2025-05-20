@@ -184,8 +184,8 @@ const Index = () => {
         <AppSidebar />
         <div className="flex flex-1 flex-col">
           <Header />
-          <main className="flex-1 overflow-auto bg-background mesh-bg">
-            <div className="container mx-auto p-4 sm:p-6 bg-[#010d01]/[0.03]">
+          <main className="flex-1 overflow-auto bg-transparent mesh-bg">
+            <div className="container mx-auto p-4 sm:p-6 bg-transparent">
               <div className="mb-8">
                 <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
                 <p className="text-muted-foreground">
@@ -199,7 +199,7 @@ const Index = () => {
               
               <section className="mb-8">
                 <h2 className="mb-4 text-xl font-semibold">Activité récente</h2>
-                <div className="rounded-xl border border-white/20 bg-white dark:bg-black/60 shadow-sm p-6">
+                <div className="rounded-xl border border-white/20 bg-black/60 backdrop-blur-md shadow-sm p-6">
                   <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-full bg-assistant flex items-center justify-center shrink-0">
                       <MessageSquare className="h-6 w-6 text-white" />
@@ -214,19 +214,19 @@ const Index = () => {
                   
                   <div className="mt-6 space-y-4">
                     <div className="grid gap-2 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 transparent-grid">
-                      <div className="flex items-center gap-2 rounded-lg border border-white/20 dark:border-white/10 p-4 bg-white dark:bg-black/40 shadow-sm">
+                      <div className="flex items-center gap-2 rounded-lg border border-white/20 dark:border-white/10 p-4 bg-black/50 backdrop-blur-md shadow-sm">
                         <div className="h-2 w-2 rounded-full bg-green-500"></div>
                         <div className="text-sm">
                           <span className="font-medium">{isLoadingActivityStats ? <Loader2 className="h-3 w-3 inline animate-spin" /> : activityStats?.successful}</span> conversations réussies
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 rounded-lg border border-white/20 dark:border-white/10 p-4 bg-white dark:bg-black/40 shadow-sm">
+                      <div className="flex items-center gap-2 rounded-lg border border-white/20 dark:border-white/10 p-4 bg-black/50 backdrop-blur-md shadow-sm">
                         <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
                         <div className="text-sm">
                           <span className="font-medium">{isLoadingActivityStats ? <Loader2 className="h-3 w-3 inline animate-spin" /> : activityStats?.inProgress}</span> conversations en cours
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 rounded-lg border border-white/20 dark:border-white/10 p-4 bg-white dark:bg-black/40 shadow-sm">
+                      <div className="flex items-center gap-2 rounded-lg border border-white/20 dark:border-white/10 p-4 bg-black/50 backdrop-blur-md shadow-sm">
                         <div className="h-2 w-2 rounded-full bg-blue-500"></div>
                         <div className="text-sm">
                           <span className="font-medium">{isLoadingActivityStats ? <Loader2 className="h-3 w-3 inline animate-spin" /> : activityStats?.newClients}</span> nouveaux clients
@@ -239,7 +239,7 @@ const Index = () => {
 
               <section>
                 <h2 className="mb-4 text-xl font-semibold">Gestion de l'assistant</h2>
-                <div className="grid gap-6 grid-cols-2 md:grid-cols-2 lg:grid-cols-2 transparent-grid">
+                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 transparent-grid">
                   <DashboardCard title="Coupons" description="Paris disponibles pour vos clients" icon={<Bookmark className="h-4 w-4" />} footerAction={{
                   label: "Gérer les coupons",
                   href: "/coupons"
