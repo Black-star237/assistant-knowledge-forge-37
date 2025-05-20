@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -57,12 +56,12 @@ interface DbCoupon {
   id: number;
   code_du_coupon: string | null;
   commentaire: string | null;
-  "description visuelle": string | null;
+  description_visuelle: string | null;  // Updated to match the actual column name
   image_url: string | null;
   jour: string | null;
   Heure: string | null;
   created_at: string;
-  user_id: string | null; // Important: user_id est de type UUID dans la DB, mais string ici
+  user_id: string | null;
   odds: string | null;
 }
 
@@ -77,7 +76,7 @@ interface CouponDisplay {
   expiry_time: string;
   image_url: string | null;
   created_at: string;
-  user_id: string | null; // Ajout de user_id ici aussi
+  user_id: string | null;
 }
 
 // Type pour les valeurs du formulaire avec userId
@@ -119,7 +118,7 @@ const Coupons = () => {
   const coupons: CouponDisplay[] = couponsData.map(coupon => ({
     id: coupon.id,
     title: coupon.commentaire || "Sans titre",
-    description: coupon["description visuelle"] || "Pas de description",
+    description: coupon.description_visuelle || "Pas de description",  // Updated to match the interface
     code: coupon.code_du_coupon || "",
     odds: coupon.odds || "1.00",
     expiry_date: coupon.jour || new Date().toISOString().split('T')[0],
@@ -134,11 +133,10 @@ const Coupons = () => {
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
-      // S'assurer que le chemin correspond à la politique RLS (coupon-images/)
       const filePath = `coupon-images/${fileName}`; 
       
       const { data, error } = await supabase.storage
-        .from('public') // Nom du bucket
+        .from('public')
         .upload(filePath, file);
       
       if (error) {
@@ -147,7 +145,7 @@ const Coupons = () => {
       }
       
       const { data: { publicUrl } } = supabase.storage
-        .from('public') // Nom du bucket
+        .from('public')
         .getPublicUrl(filePath);
       
       return publicUrl;
@@ -164,19 +162,13 @@ const Coupons = () => {
 
   // Add or update coupon mutation
   const mutation = useMutation({
-    mutationFn: async (values: FormValuesWithUserId) => { // Accepte FormValuesWithUserId
-      let imageUrl = editingCoupon?.image_url || null; // Conserve l'ancienne image par défaut
+    mutationFn: async (values: FormValuesWithUserId) => {
+      let imageUrl = editingCoupon?.image_url || null;
       
-      if (selectedImage) { // Si une nouvelle image est sélectionnée
+      if (selectedImage) {
         const uploadedUrl = await uploadImage(selectedImage);
         if (uploadedUrl) {
           imageUrl = uploadedUrl;
-        } else if (!editingCoupon?.image_url) { 
-          // Si le téléchargement échoue et qu'il n'y avait pas d'image avant (pour un nouveau coupon)
-          // Ou si l'utilisateur veut explicitement supprimer l'image et que le téléchargement échoue
-          // Peut-être ne pas définir imageUrl sur null ici, dépend du comportement souhaité.
-          // Si le téléchargement échoue, on pourrait vouloir conserver l'ancienne image si c'est une édition.
-          // Pour la création, si le téléchargement échoue, imageUrl restera null.
         }
       }
       
@@ -185,31 +177,29 @@ const Coupons = () => {
           .from('coupons')
           .update({
             commentaire: values.title,
-            "description visuelle": values.description,
+            description_visuelle: values.description,  // Updated to match the column name
             code_du_coupon: values.code,
             jour: values.expiryDate,
             Heure: values.expiryTime || null,
             odds: values.odds,
-            image_url: imageUrl, // Utilise la nouvelle ou l'ancienne URL
-            // user_id n'est pas mis à jour, car il est défini par la politique RLS à la création
+            image_url: imageUrl,
           })
           .eq('id', editingCoupon.id);
           
         if (error) throw error;
         return { action: 'update', values };
       } else {
-        // C'est ici que user_id est crucial
         const { error } = await supabase
           .from('coupons')
           .insert({
             commentaire: values.title,
-            "description visuelle": values.description,
+            description_visuelle: values.description,  // Updated to match the column name
             code_du_coupon: values.code,
             jour: values.expiryDate,
             Heure: values.expiryTime || null,
             odds: values.odds,
             image_url: imageUrl,
-            user_id: values.userId, // Ajout de user_id
+            user_id: values.userId,
           });
           
         if (error) throw error;
