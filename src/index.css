@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -93,7 +94,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background/70 text-foreground font-sans;
   }
 }
 
@@ -138,16 +139,6 @@
   .sidebar-item-active {
     @apply bg-orange-200 dark:bg-orange-300/50 text-black font-medium;
   }
-}
-
-/* Dégradé de fond pour le mode clair */
-.mesh-bg {
-  background: linear-gradient(to bottom, #ffdfd3 0%, #fff5f2 50%, #ffffff 100%);
-}
-
-/* Dégradé de fond pour le mode sombre */
-.dark .mesh-bg {
-  background: linear-gradient(to bottom, rgba(20, 20, 40, 0.95) 0%, rgba(10, 10, 20, 0.98) 100%);
 }
 
 /* Style pour la superposition de la sidebar en mode mobile */

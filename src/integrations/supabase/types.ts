@@ -161,6 +161,24 @@ export type Database = {
           },
         ]
       }
+      dark_mode_backgrounds: {
+        Row: {
+          created_at: string
+          id: number
+          image_url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          image_url: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          image_url?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           content: string | null
@@ -351,6 +369,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      light_mode_backgrounds: {
+        Row: {
+          created_at: string
+          id: number
+          image_url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          image_url: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          image_url?: string
+        }
+        Relationships: []
       }
       messages_whatsapp: {
         Row: {
