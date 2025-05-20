@@ -1,10 +1,10 @@
 
+/* Supprimer les styles qui peuvent interférer avec notre arrière-plan */
 #root {
-  /* max-width: 1280px; (Supprimé) */
-  /* margin: 0 auto; (Conservé pour un centrage de base, mais les pages peuvent surcharger) */
-  /* padding: 2rem; (Supprimé) */
-  /* text-align: center; (Supprimé car souvent non désiré globalement) */
-  margin: 0 auto; /* Optionnel: peut être retiré si chaque page gère son centrage */
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
 }
 
 .logo {
@@ -42,4 +42,3 @@
 .read-the-docs {
   color: #888;
 }
-

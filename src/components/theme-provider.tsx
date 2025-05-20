@@ -42,6 +42,7 @@ export function ThemeProvider({
   const [darkBackgrounds, setDarkBackgrounds] = useState<BackgroundImage[]>([]);
   const [currentBackground, setCurrentBackground] = useState<string | null>(null);
   const [backgroundIndex, setBackgroundIndex] = useState(0);
+  const [loaded, setLoaded] = useState(false);
 
   // Récupérer les fonds d'écran depuis Supabase
   useEffect(() => {
@@ -56,6 +57,7 @@ export function ThemeProvider({
           console.error("Erreur lors de la récupération des fonds clairs:", lightError);
         } else if (lightData && lightData.length > 0) {
           setLightBackgrounds(lightData);
+          console.log("Fonds clairs chargés:", lightData.length);
         }
         
         // Récupérer les fonds pour le mode sombre
@@ -67,9 +69,13 @@ export function ThemeProvider({
           console.error("Erreur lors de la récupération des fonds sombres:", darkError);
         } else if (darkData && darkData.length > 0) {
           setDarkBackgrounds(darkData);
+          console.log("Fonds sombres chargés:", darkData.length);
         }
+        
+        setLoaded(true);
       } catch (error) {
         console.error("Erreur de récupération des fonds d'écran:", error);
+        setLoaded(true);
       }
     };
 
@@ -91,16 +97,18 @@ export function ThemeProvider({
     root.classList.add(effectiveTheme);
 
     // Sélectionner le premier fond d'écran en fonction du thème
-    if (effectiveTheme === "dark" && darkBackgrounds.length > 0) {
-      setCurrentBackground(darkBackgrounds[0].image_url);
-    } else if (effectiveTheme === "light" && lightBackgrounds.length > 0) {
-      setCurrentBackground(lightBackgrounds[0].image_url);
+    if (loaded) {
+      if (effectiveTheme === "dark" && darkBackgrounds.length > 0) {
+        setCurrentBackground(darkBackgrounds[0].image_url);
+      } else if (effectiveTheme === "light" && lightBackgrounds.length > 0) {
+        setCurrentBackground(lightBackgrounds[0].image_url);
+      }
     }
-  }, [theme, lightBackgrounds, darkBackgrounds]);
+  }, [theme, lightBackgrounds, darkBackgrounds, loaded]);
 
   // Changer le fond d'écran toutes les minutes
   useEffect(() => {
-    if (lightBackgrounds.length === 0 && darkBackgrounds.length === 0) return;
+    if (!loaded || (lightBackgrounds.length === 0 && darkBackgrounds.length === 0)) return;
 
     const interval = setInterval(() => {
       const currentTheme = document.documentElement.classList.contains("dark") 
@@ -114,19 +122,24 @@ export function ThemeProvider({
         const nextIndex = (backgroundIndex + 1) % backgrounds.length;
         setBackgroundIndex(nextIndex);
         setCurrentBackground(backgrounds[nextIndex].image_url);
+        console.log("Changement d'arrière-plan:", backgrounds[nextIndex].image_url);
       }
     }, 60000); // 60000 ms = 1 minute
 
     return () => clearInterval(interval);
-  }, [backgroundIndex, lightBackgrounds, darkBackgrounds]);
+  }, [backgroundIndex, lightBackgrounds, darkBackgrounds, loaded]);
 
   // Appliquer le fond d'écran au body
   useEffect(() => {
     if (currentBackground) {
+      console.log("Application du fond d'écran:", currentBackground);
       document.body.style.backgroundImage = `url(${currentBackground})`;
       document.body.style.backgroundSize = 'cover';
       document.body.style.backgroundPosition = 'center';
       document.body.style.backgroundAttachment = 'fixed';
+      document.body.style.backgroundRepeat = 'no-repeat';
+      document.body.style.position = 'relative';
+      document.body.style.zIndex = '0';
       
       // Ajouter un overlay pour assurer la lisibilité du contenu
       const currentTheme = document.documentElement.classList.contains("dark") 
@@ -134,10 +147,8 @@ export function ThemeProvider({
         : "light";
       
       if (currentTheme === "dark") {
-        document.body.style.backgroundBlendMode = 'multiply';
         document.body.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
       } else {
-        document.body.style.backgroundBlendMode = 'overlay';
         document.body.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
       }
     }

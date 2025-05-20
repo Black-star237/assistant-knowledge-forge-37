@@ -39,12 +39,12 @@
     --sidebar-foreground: 222.2 84% 4.9%;
     --sidebar-primary: 204 80% 50%;
     --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 204 100% 97%; /* Légèrement bleu pour les items non actifs */
+    --sidebar-accent: 204 100% 97%;
     --sidebar-accent-foreground: 222.2 47.4% 11.2%;
     --sidebar-border: 214.3 31.8% 91.4%;
     --sidebar-ring: 204 80% 50%;
-    --sidebar-active: 25 100% 75%; /* Couleur orange douce pour l'item actif */
-    --sidebar-active-foreground: 0 0% 0%; /* Texte noir pour l'item actif */
+    --sidebar-active: 25 100% 75%;
+    --sidebar-active-foreground: 0 0% 0%;
   }
 
   .dark {
@@ -76,7 +76,7 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 204 80% 50%;
 
-    --sidebar-background: 240 10% 15%; /* Fond sombre pour la sidebar */
+    --sidebar-background: 240 10% 15%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 204 80% 50%;
     --sidebar-primary-foreground: 210 40% 98%;
@@ -84,8 +84,8 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217.2 32.6% 17.5%;
     --sidebar-ring: 204 80% 50%;
-    --sidebar-active: 25 90% 65%; /* Orange douce pour le mode sombre */
-    --sidebar-active-foreground: 0 0% 0%; /* Texte noir pour l'item actif */
+    --sidebar-active: 25 90% 65%;
+    --sidebar-active-foreground: 0 0% 0%;
   }
 }
 
@@ -93,8 +93,20 @@
   * {
     @apply border-border;
   }
+  
+  html, body {
+    @apply min-h-screen w-full;
+  }
+  
   body {
-    @apply bg-background/70 text-foreground font-sans;
+    @apply text-foreground font-sans;
+    background-color: transparent !important;
+  }
+  
+  #root {
+    @apply min-h-screen w-full;
+    position: relative;
+    z-index: 1;
   }
 }
 
