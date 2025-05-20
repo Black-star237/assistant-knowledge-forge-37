@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { waApiService } from "@/services/waapi";
+import { Badge } from "@/components/ui/badge";
 
 const LicenceWhatsapp = () => {
   const { toast } = useToast();
@@ -303,25 +303,41 @@ const LicenceWhatsapp = () => {
   }, [toast, user, refetch]);
 
   const getStatusComponent = () => {
-    if (licenceData?.n8n_connected) {
-      return (
-        <div className="flex items-center">
-          <Check className="h-5 w-5 text-green-500 mr-2" />
-          <span className="text-green-500 font-medium">
-            {licenceData.statu || "Connecté"}
-          </span>
-        </div>
-      );
+    if (!licenceData) return null;
+
+    const status = licenceData.statu || (licenceData.n8n_connected ? "Connecté" : "Déconnecté");
+    
+    // Définir le style en fonction du statut
+    let icon, textColorClass, bgColorClass;
+    
+    if (status === "Redémarré" || status === "Démarrage") {
+      // Style bleu pour Redémarré/Démarrage
+      icon = <RefreshCw className="h-5 w-5 text-blue-500 mr-2" />;
+      textColorClass = "text-blue-600";
+      bgColorClass = "bg-blue-50";
+    } else if (licenceData.n8n_connected || status === "Connecté") {
+      // Style vert pour Connecté
+      icon = <Check className="h-5 w-5 text-green-500 mr-2" />;
+      textColorClass = "text-green-600";
+      bgColorClass = "bg-green-50";
     } else {
-      return (
-        <div className="flex items-center">
-          <X className="h-5 w-5 text-red-500 mr-2" />
-          <span className="text-red-500 font-medium">
-            {licenceData?.statu || "Déconnecté"}
-          </span>
-        </div>
-      );
+      // Style rouge pour Déconnecté
+      icon = <X className="h-5 w-5 text-red-500 mr-2" />;
+      textColorClass = "text-red-600";
+      bgColorClass = "bg-red-50";
     }
+
+    return (
+      <Badge 
+        variant="outline" 
+        className={`flex items-center px-3 py-1 ${bgColorClass} border-transparent`}
+      >
+        {icon}
+        <span className={`font-medium ${textColorClass}`}>
+          {status}
+        </span>
+      </Badge>
+    );
   };
 
   const isUserWaiting = userProfile?.solvable && !licenceData;
