@@ -1,95 +1,140 @@
-import { ReactNode } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
-interface DashboardCardProps {
+import { Bookmark, FileText, HelpCircle, Info, Loader2 } from "lucide-react";
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+export interface StatCardData {
   title: string;
+  value: string | number;
+  change?: string;
+  changeType?: "increase" | "decrease" | "neutral";
+  icon: React.ReactNode;
   description?: string;
-  icon?: ReactNode;
-  children: ReactNode;
-  className?: string;
-  footer?: ReactNode;
-  footerAction?: {
-    label: string;
-    href: string;
-  };
-  color?: "default" | "primary" | "secondary" | "blue" | "green" | "orange";
+  isLoading?: boolean;
 }
 
-export function DashboardCard({
+export function StatCard({
   title,
-  description,
+  value,
+  change,
+  changeType = "neutral",
   icon,
-  children,
-  className,
-  footer,
-  footerAction,
-  color = "default",
-}: DashboardCardProps) {
-  const getColorClass = () => {
-    switch (color) {
-      case "primary":
-        return "border-l-4 border-l-primary";
-      case "secondary":
-        return "border-l-4 border-l-secondary";
-      case "blue":
-        return "border-l-4 border-l-jovial-blue";
-      case "green":
-        return "border-l-4 border-l-jovial-green";
-      case "orange":
-        return "border-l-4 border-l-jovial-orange";
-      default:
-        return "";
-    }
-  };
+  description,
+  isLoading,
+}: StatCardData) {
+  return (
+    <div className="rounded-lg border border-border/40 bg-white dark:bg-black/60 shadow-sm backdrop-blur-sm p-4 transition-all">
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-medium text-muted-foreground">{title}</div>
+        <div className="rounded-full bg-primary/10 p-2 text-primary">{icon}</div>
+      </div>
+      {isLoading ? (
+        <div className="mt-2 flex items-center">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <span className="ml-2 text-sm text-muted-foreground">Chargement...</span>
+        </div>
+      ) : (
+        <>
+          <div className="mt-2 flex items-baseline gap-2">
+            <div className="text-2xl font-bold">{value}</div>
+            {change && (
+              <div
+                className={`text-xs font-medium ${
+                  changeType === "increase"
+                    ? "text-green-600 dark:text-green-400"
+                    : changeType === "decrease"
+                    ? "text-red-600 dark:text-red-400"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {change}
+              </div>
+            )}
+          </div>
+          {description && (
+            <div className="mt-1 text-xs text-muted-foreground">{description}</div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
 
-  const getIconClass = () => {
-    switch (color) {
-      case "primary":
-        return "text-primary";
-      case "secondary":
-        return "text-secondary";
-      case "blue":
-        return "text-jovial-blue";
-      case "green":
-        return "text-jovial-green";
-      case "orange":
-        return "text-jovial-orange";
-      default:
-        return "text-muted-foreground";
+interface DashboardStatsData {
+  coupons: { count: number; latestCreatedAt: string | null };
+  procedures: { count: number; latestCreatedAt: string | null };
+  problems: { count: number; latestCreatedAt: string | null };
+  botInfo: { 
+    count: number; 
+    latestCreatedAt: string | null;
+    codePromoCount: number;
+    liensCount: number;
+    reglesCount: number;
+  };
+}
+
+interface StatsOverviewProps {
+  data: DashboardStatsData | null;
+  isLoading: boolean;
+}
+
+export function StatsOverview({ data, isLoading }: StatsOverviewProps) {
+  const getChangeText = (latestCreatedAt: string | null) => {
+    if (!latestCreatedAt) return "Aucune donnée";
+    try {
+      return `Dernier: ${formatDistanceToNow(new Date(latestCreatedAt), { addSuffix: true, locale: fr })}`;
+    } catch (e) {
+      console.error("Error formatting date:", latestCreatedAt, e);
+      return "Date invalide";
     }
   };
+  
+  const stats: StatCardData[] = [
+    {
+      title: "Coupons",
+      value: data?.coupons?.count ?? 0,
+      change: data?.coupons?.latestCreatedAt ? getChangeText(data.coupons.latestCreatedAt) : (isLoading ? "" : "N/A"),
+      changeType: "neutral" as const,
+      icon: <Bookmark size={16} />,
+      description: "Paris disponibles pour vos clients",
+      isLoading: isLoading,
+    },
+    {
+      title: "Procédures",
+      value: data?.procedures?.count ?? 0,
+      change: data?.procedures?.latestCreatedAt ? getChangeText(data.procedures.latestCreatedAt) : (isLoading ? "" : "N/A"),
+      changeType: "neutral" as const,
+      icon: <FileText size={16} />,
+      description: "Guides étape par étape",
+      isLoading: isLoading,
+    },
+    {
+      title: "Problèmes & Solutions",
+      value: data?.problems?.count ?? 0,
+      change: data?.problems?.latestCreatedAt ? getChangeText(data.problems.latestCreatedAt) : (isLoading ? "" : "N/A"),
+      changeType: "neutral" as const,
+      icon: <HelpCircle size={16} />,
+      description: "FAQ pour résoudre les problèmes",
+      isLoading: isLoading,
+    },
+    {
+      title: "Informations Bot",
+      value: data?.botInfo?.count ?? 0,
+      change: data?.botInfo?.count ? 
+        `Code promo: ${data.botInfo.codePromoCount} • Liens: ${data.botInfo.liensCount} • Règles: ${data.botInfo.reglesCount}` : 
+        (isLoading ? "" : "N/A"),
+      changeType: "neutral" as const,
+      icon: <Info size={16} />,
+      description: "Données complémentaires",
+      isLoading: isLoading,
+    },
+  ];
 
   return (
-    <Card className={cn(
-      "overflow-hidden transition-all hover:shadow-md rounded-xl bg-transparent dark:bg-transparent shadow-sm",
-      getColorClass(),
-      className
-    )}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div>
-          <CardTitle className="text-lg font-semibold">{title}</CardTitle>
-          {description && (
-            <CardDescription className="text-sm">{description}</CardDescription>
-          )}
-        </div>
-        {icon && <div className={cn("p-2 rounded-full bg-muted/30", getIconClass())}>{icon}</div>}
-      </CardHeader>
-      <CardContent>
-        <div>{children}</div>
-      </CardContent>
-      {(footer || footerAction) && (
-        <CardFooter className="border-t border-white/20 dark:border-white/5 bg-white/50 dark:bg-black/40 px-6 py-3">
-          {footer || (
-            <div className="flex w-full justify-end">
-              <Button variant="ghost" size="sm" asChild className="hover:bg-background/50">
-                <a href={footerAction?.href}>{footerAction?.label}</a>
-              </Button>
-            </div>
-          )}
-        </CardFooter>
-      )}
-    </Card>
+    <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 transparent-grid">
+      {stats.map((stat) => (
+        <StatCard key={stat.title} {...stat} />
+      ))}
+    </div>
   );
 }
