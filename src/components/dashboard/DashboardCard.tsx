@@ -1,4 +1,3 @@
-
 import { ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -30,15 +29,15 @@ export function DashboardCard({
 }: DashboardCardProps) {
   const getColorClass = () => {
     switch (color) {
-      case "primary": 
+      case "primary":
         return "border-l-4 border-l-primary";
-      case "secondary": 
+      case "secondary":
         return "border-l-4 border-l-secondary";
-      case "blue": 
+      case "blue":
         return "border-l-4 border-l-jovial-blue";
-      case "green": 
+      case "green":
         return "border-l-4 border-l-jovial-green";
-      case "orange": 
+      case "orange":
         return "border-l-4 border-l-jovial-orange";
       default:
         return "";
@@ -47,15 +46,15 @@ export function DashboardCard({
 
   const getIconClass = () => {
     switch (color) {
-      case "primary": 
+      case "primary":
         return "text-primary";
-      case "secondary": 
+      case "secondary":
         return "text-secondary";
-      case "blue": 
+      case "blue":
         return "text-jovial-blue";
-      case "green": 
+      case "green":
         return "text-jovial-green";
-      case "orange": 
+      case "orange":
         return "text-jovial-orange";
       default:
         return "text-muted-foreground";
@@ -64,7 +63,7 @@ export function DashboardCard({
 
   return (
     <Card className={cn(
-      "overflow-hidden transition-all hover:shadow-md rounded-xl bg-white dark:bg-black/60 shadow-sm",
+      "overflow-hidden transition-all hover:shadow-md rounded-xl bg-transparent dark:bg-transparent shadow-sm",
       getColorClass(),
       className
     )}>
