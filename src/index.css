@@ -42,8 +42,8 @@
     --sidebar-accent-foreground: 222.2 47.4% 11.2%;
     --sidebar-border: 214.3 31.8% 91.4%;
     --sidebar-ring: 204 80% 50%;
-    --sidebar-active: 142 76% 36%; /* Vert vif pour l'item actif */
-    --sidebar-active-foreground: 0 0% 100%; /* Texte blanc pour l'item actif */
+    --sidebar-active: 25 100% 75%; /* Couleur orange douce pour l'item actif */
+    --sidebar-active-foreground: 0 0% 0%; /* Texte noir pour l'item actif */
   }
 
   .dark {
@@ -83,8 +83,8 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217.2 32.6% 17.5%;
     --sidebar-ring: 204 80% 50%;
-    --sidebar-active: 142 76% 36%; /* Vert vif pour l'item actif */
-    --sidebar-active-foreground: 0 0% 100%; /* Texte blanc pour l'item actif */
+    --sidebar-active: 25 90% 65%; /* Orange douce pour le mode sombre */
+    --sidebar-active-foreground: 0 0% 0%; /* Texte noir pour l'item actif */
   }
 }
 
@@ -136,7 +136,7 @@
   }
   
   .sidebar-item-active {
-    @apply bg-green-500 text-white font-medium;
+    @apply bg-orange-200 dark:bg-orange-300/50 text-black font-medium;
   }
 }
 

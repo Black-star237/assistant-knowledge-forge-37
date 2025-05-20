@@ -34,7 +34,7 @@ export const AppSidebar = () => {
 
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
     `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg ${isActive
-      ? 'sidebar-item-active' // Rubrique active: fond vert vif, texte blanc
+      ? 'sidebar-item-active' // Rubrique active: fond orange doux, texte noir
       : 'sidebar-item' // Rubriques inactives: fond bleu clair, texte noir
     }`;
 
@@ -49,7 +49,7 @@ export const AppSidebar = () => {
         {/* Avatar utilisateur */}
         <div className={`p-4 ${isOpen ? 'items-start' : 'items-center'} flex flex-col mb-3`}>  
           <div className={`flex ${isOpen ? 'flex-row items-center w-full gap-4' : 'flex-col'}`}>
-            <Avatar className="h-11 w-11 border-2 border-green-500">
+            <Avatar className="h-11 w-11 border-2 border-orange-300">
               <AvatarFallback className="bg-orange-500 text-white font-medium">
                 {user?.email?.substring(0, 2).toUpperCase() || 'U'}
               </AvatarFallback>
@@ -58,7 +58,7 @@ export const AppSidebar = () => {
             {isOpen && (
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{user?.email}</span>
-                <Button variant="link" asChild className="h-auto p-0 text-xs text-gray-700 dark:text-gray-300 hover:text-green-500">
+                <Button variant="link" asChild className="h-auto p-0 text-xs text-gray-700 dark:text-gray-300 hover:text-orange-500">
                   <NavLink to="/profile">Mon profil</NavLink>
                 </Button>
               </div>
@@ -75,7 +75,7 @@ export const AppSidebar = () => {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <NavLink to={item.url} className={getNavLinkClass} end>
-                        <item.icon className={`h-5 w-5 ${location.pathname === item.url ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`} />
+                        <item.icon className={`h-5 w-5 ${location.pathname === item.url ? 'text-black dark:text-black' : 'text-gray-700 dark:text-gray-300'}`} />
                         {isOpen && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
