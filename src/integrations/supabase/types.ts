@@ -9,787 +9,91 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      auth_backgrounds: {
+      video_categories: {
         Row: {
-          created_at: string
-          id: number
-          image_url: string
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          image_url: string
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          image_url?: string
-        }
-        Relationships: []
-      }
-      code_promo: {
-        Row: {
-          contenu: string | null
-          created_at: string
-          id: number
-          id_vector: number | null
-          titre: string | null
-          user_profile: string | null
-        }
-        Insert: {
-          contenu?: string | null
-          created_at?: string
-          id?: number
-          id_vector?: number | null
-          titre?: string | null
-          user_profile?: string | null
-        }
-        Update: {
-          contenu?: string | null
-          created_at?: string
-          id?: number
-          id_vector?: number | null
-          titre?: string | null
-          user_profile?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "code_promo_id_vector_fkey"
-            columns: ["id_vector"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "code_promo_user_profile_fkey"
-            columns: ["user_profile"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      contacts: {
-        Row: {
-          Approved: boolean
-          created_at: string
-          id: number
-          Name: string | null
-          Number: string
-          user_id: string | null
-        }
-        Insert: {
-          Approved?: boolean
-          created_at?: string
-          id?: number
-          Name?: string | null
-          Number: string
-          user_id?: string | null
-        }
-        Update: {
-          Approved?: boolean
-          created_at?: string
-          id?: number
-          Name?: string | null
-          Number?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contacts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      coupons: {
-        Row: {
-          code_du_coupon: string | null
-          commentaire: string | null
-          created_at: string
-          description_visuelle: string | null
-          Heure: string | null
-          id: number
-          id_vector: number | null
-          image_url: string | null
-          jour: string | null
-          odds: string | null
-          user_id: string | null
-        }
-        Insert: {
-          code_du_coupon?: string | null
-          commentaire?: string | null
-          created_at?: string
-          description_visuelle?: string | null
-          Heure?: string | null
-          id?: number
-          id_vector?: number | null
-          image_url?: string | null
-          jour?: string | null
-          odds?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          code_du_coupon?: string | null
-          commentaire?: string | null
-          created_at?: string
-          description_visuelle?: string | null
-          Heure?: string | null
-          id?: number
-          id_vector?: number | null
-          image_url?: string | null
-          jour?: string | null
-          odds?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "coupons_id_vector_fkey"
-            columns: ["id_vector"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "Coupons_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      dark_mode_backgrounds: {
-        Row: {
-          created_at: string
-          id: number
-          image_url: string
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          image_url: string
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          image_url?: string
-        }
-        Relationships: []
-      }
-      documents: {
-        Row: {
-          content: string | null
-          embedding: string | null
-          id: number
-          metadata: Json | null
-        }
-        Insert: {
-          content?: string | null
-          embedding?: string | null
-          id?: number
-          metadata?: Json | null
-        }
-        Update: {
-          content?: string | null
-          embedding?: string | null
-          id?: number
-          metadata?: Json | null
-        }
-        Relationships: []
-      }
-      exemples_de_discussions: {
-        Row: {
-          created_at: string
-          discussion: string | null
-          id: number
-          id_vector: number | null
-          titre: string | null
-          user_profile: string | null
-        }
-        Insert: {
-          created_at?: string
-          discussion?: string | null
-          id?: number
-          id_vector?: number | null
-          titre?: string | null
-          user_profile?: string | null
-        }
-        Update: {
-          created_at?: string
-          discussion?: string | null
-          id?: number
-          id_vector?: number | null
-          titre?: string | null
-          user_profile?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "exemples_de_discussions_id_vector_fkey"
-            columns: ["id_vector"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "exemples_de_discussions_user_profile_fkey"
-            columns: ["user_profile"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      informations_bot: {
-        Row: {
-          "codes promo": string | null
-          created_at: string
-          "exemples de discutions": string | null
-          id: string
-          "liens utiles": string | null
-          règles: string | null
-          user_id: string
-        }
-        Insert: {
-          "codes promo"?: string | null
-          created_at?: string
-          "exemples de discutions"?: string | null
-          id?: string
-          "liens utiles"?: string | null
-          règles?: string | null
-          user_id: string
-        }
-        Update: {
-          "codes promo"?: string | null
-          created_at?: string
-          "exemples de discutions"?: string | null
-          id?: string
-          "liens utiles"?: string | null
-          règles?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "Informations Bot_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      "Licences Whatsapp": {
-        Row: {
-          created_at: string
-          id: number
-          id_user: string | null
-          id_WaAPI: number | null
-          id_Workflow: string | null
-          n8n_connected: boolean | null
-          Nom: string | null
-          statu: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          id_user?: string | null
-          id_WaAPI?: number | null
-          id_Workflow?: string | null
-          n8n_connected?: boolean | null
-          Nom?: string | null
-          statu?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          id_user?: string | null
-          id_WaAPI?: number | null
-          id_Workflow?: string | null
-          n8n_connected?: boolean | null
-          Nom?: string | null
-          statu?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "Licences Whatsapp_id_user_fkey"
-            columns: ["id_user"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "Licences Whatsapp_statu_fkey"
-            columns: ["statu"]
-            isOneToOne: false
-            referencedRelation: "status"
-            referencedColumns: ["nom"]
-          },
-        ]
-      }
-      liens_utiles: {
-        Row: {
-          contenu: string | null
-          created_at: string
-          id: number
-          id_vector: number | null
-          titre: string | null
-          user_profile: string
-        }
-        Insert: {
-          contenu?: string | null
-          created_at?: string
-          id?: number
-          id_vector?: number | null
-          titre?: string | null
-          user_profile: string
-        }
-        Update: {
-          contenu?: string | null
-          created_at?: string
-          id?: number
-          id_vector?: number | null
-          titre?: string | null
-          user_profile?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "liens_utiles_id_vector_fkey"
-            columns: ["id_vector"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "liens_utiles_user_profile_fkey"
-            columns: ["user_profile"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      light_mode_backgrounds: {
-        Row: {
-          created_at: string
-          id: number
-          image_url: string
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          image_url: string
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          image_url?: string
-        }
-        Relationships: []
-      }
-      messages_whatsapp: {
-        Row: {
-          chat_id: string
-          contact: string | null
-          created_at: string
-          envoyé: boolean
-          id: number
-          id_user: string
-          message: string
-          question: string | null
-          reply_id: string
-        }
-        Insert: {
-          chat_id: string
-          contact?: string | null
-          created_at?: string
-          envoyé?: boolean
-          id?: number
-          id_user: string
-          message: string
-          question?: string | null
-          reply_id: string
-        }
-        Update: {
-          chat_id?: string
-          contact?: string | null
-          created_at?: string
-          envoyé?: boolean
-          id?: number
-          id_user?: string
-          message?: string
-          question?: string | null
-          reply_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_whatsapp_contact_fkey"
-            columns: ["contact"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["Number"]
-          },
-          {
-            foreignKeyName: "messages_whatsapp_id_user_fkey"
-            columns: ["id_user"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      order_status: {
-        Row: {
-          created_at: string
-          id: number
-          nom: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          nom?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          nom?: string | null
-        }
-        Relationships: []
-      }
-      orders: {
-        Row: {
-          created_at: string
-          id: number
-          statu: number | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          statu?: number | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          statu?: number | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "orders_statu_fkey"
-            columns: ["statu"]
-            isOneToOne: false
-            referencedRelation: "order_status"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "orders_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      problemes_et_solutions: {
-        Row: {
-          category: string | null
-          created_at: string
-          Description: string | null
-          id: number
-          id_vector: number | null
-          Solutions: string | null
-          tags: string | null
-          titre: string | null
-          user_profile: string | null
-        }
-        Insert: {
-          category?: string | null
-          created_at?: string
-          Description?: string | null
-          id?: number
-          id_vector?: number | null
-          Solutions?: string | null
-          tags?: string | null
-          titre?: string | null
-          user_profile?: string | null
-        }
-        Update: {
-          category?: string | null
-          created_at?: string
-          Description?: string | null
-          id?: number
-          id_vector?: number | null
-          Solutions?: string | null
-          tags?: string | null
-          titre?: string | null
-          user_profile?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "problemes_et_solutions_id_vector_fkey"
-            columns: ["id_vector"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "problèmes_et_solutions_user_profile_fkey"
-            columns: ["user_profile"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      procedures: {
-        Row: {
-          created_at: string
-          description: string | null
-          etapes_procedure: string | null
-          id: number
-          id_vector: number | null
-          Titre_procedure: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          etapes_procedure?: string | null
-          id?: number
-          id_vector?: number | null
-          Titre_procedure?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          etapes_procedure?: string | null
-          id?: number
-          id_vector?: number | null
-          Titre_procedure?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "procedures_id_vector_fkey"
-            columns: ["id_vector"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "Procédures_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      regles: {
-        Row: {
-          contenu: string | null
-          created_at: string
-          id: number
-          id_vector: number | null
-          titre: string | null
-          user_profile: string | null
-        }
-        Insert: {
-          contenu?: string | null
-          created_at?: string
-          id?: number
-          id_vector?: number | null
-          titre?: string | null
-          user_profile?: string | null
-        }
-        Update: {
-          contenu?: string | null
-          created_at?: string
-          id?: number
-          id_vector?: number | null
-          titre?: string | null
-          user_profile?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "regles_id_vector_fkey"
-            columns: ["id_vector"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "regles_user_profile_fkey"
-            columns: ["user_profile"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      status: {
-        Row: {
-          created_at: string
-          id: number
-          nom: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          nom?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          nom?: string | null
-        }
-        Relationships: []
-      }
-      user_profiles: {
-        Row: {
+          banner_url: string | null
           created_at: string | null
-          durée_souscription: number | null
+          description: string | null
           id: string
-          nom: string | null
-          "Numero Whatsapp perso": string | null
-          Numero_whatsapp_Bot: number | null
-          Offre: string | null
-          "Photo de profile": string | null
-          solvable: boolean | null
+          name: string
+          slug: string
         }
         Insert: {
+          banner_url?: string | null
           created_at?: string | null
-          durée_souscription?: number | null
-          id: string
-          nom?: string | null
-          "Numero Whatsapp perso"?: string | null
-          Numero_whatsapp_Bot?: number | null
-          Offre?: string | null
-          "Photo de profile"?: string | null
-          solvable?: boolean | null
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
         }
         Update: {
+          banner_url?: string | null
           created_at?: string | null
-          durée_souscription?: number | null
+          description?: string | null
           id?: string
-          nom?: string | null
-          "Numero Whatsapp perso"?: string | null
-          Numero_whatsapp_Bot?: number | null
-          Offre?: string | null
-          "Photo de profile"?: string | null
-          solvable?: boolean | null
+          name?: string
+          slug?: string
         }
         Relationships: []
+      }
+      videos: {
+        Row: {
+          category_id: string | null
+          client: string | null
+          created_at: string | null
+          description: string | null
+          duration: string | null
+          id: string
+          thumbnail_url: string | null
+          title: string
+          upload_date: string | null
+          video_url: string
+          views: number | null
+        }
+        Insert: {
+          category_id?: string | null
+          client?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          thumbnail_url?: string | null
+          title: string
+          upload_date?: string | null
+          video_url: string
+          views?: number | null
+        }
+        Update: {
+          category_id?: string | null
+          client?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          thumbnail_url?: string | null
+          title?: string
+          upload_date?: string | null
+          video_url?: string
+          views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "video_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      binary_quantize: {
-        Args: { "": string } | { "": unknown }
-        Returns: unknown
-      }
-      halfvec_avg: {
-        Args: { "": number[] }
-        Returns: unknown
-      }
-      halfvec_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      halfvec_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      halfvec_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
-      hnsw_bit_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnsw_halfvec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnsw_sparsevec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnswhandler: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflat_bit_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflat_halfvec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflathandler: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      l2_norm: {
-        Args: { "": unknown } | { "": unknown }
-        Returns: number
-      }
-      l2_normalize: {
-        Args: { "": string } | { "": unknown } | { "": unknown }
-        Returns: string
-      }
-      match_documents: {
-        Args: { query_embedding: string; match_count?: number; filter?: Json }
-        Returns: {
-          id: number
-          content: string
-          metadata: Json
-          similarity: number
-        }[]
-      }
-      sparsevec_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      sparsevec_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      sparsevec_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
-      vector_avg: {
-        Args: { "": number[] }
-        Returns: string
-      }
-      vector_dims: {
-        Args: { "": string } | { "": unknown }
-        Returns: number
-      }
-      vector_norm: {
-        Args: { "": string }
-        Returns: number
-      }
-      vector_out: {
-        Args: { "": string }
-        Returns: unknown
-      }
-      vector_send: {
-        Args: { "": string }
-        Returns: string
-      }
-      vector_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
+      increment_video_views: {
+        Args: { video_id: string }
+        Returns: undefined
       }
     }
     Enums: {
