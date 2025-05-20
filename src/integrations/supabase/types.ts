@@ -51,12 +51,47 @@ export type Database = {
           },
         ]
       }
+      contacts: {
+        Row: {
+          Approved: boolean
+          created_at: string
+          id: number
+          Name: string | null
+          Number: string
+          user_id: string | null
+        }
+        Insert: {
+          Approved?: boolean
+          created_at?: string
+          id?: number
+          Name?: string | null
+          Number: string
+          user_id?: string | null
+        }
+        Update: {
+          Approved?: boolean
+          created_at?: string
+          id?: number
+          Name?: string | null
+          Number?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coupons: {
         Row: {
           code_du_coupon: string | null
           commentaire: string | null
           created_at: string
-          "description visuelle": string | null
+          description_visuelle: string | null
           Heure: string | null
           id: number
           id_vector: number | null
@@ -69,7 +104,7 @@ export type Database = {
           code_du_coupon?: string | null
           commentaire?: string | null
           created_at?: string
-          "description visuelle"?: string | null
+          description_visuelle?: string | null
           Heure?: string | null
           id?: number
           id_vector?: number | null
@@ -82,7 +117,7 @@ export type Database = {
           code_du_coupon?: string | null
           commentaire?: string | null
           created_at?: string
-          "description visuelle"?: string | null
+          description_visuelle?: string | null
           Heure?: string | null
           id?: number
           id_vector?: number | null
@@ -302,6 +337,7 @@ export type Database = {
       messages_whatsapp: {
         Row: {
           chat_id: string
+          contact: string | null
           created_at: string
           envoyé: boolean
           id: number
@@ -312,6 +348,7 @@ export type Database = {
         }
         Insert: {
           chat_id: string
+          contact?: string | null
           created_at?: string
           envoyé?: boolean
           id?: number
@@ -322,6 +359,7 @@ export type Database = {
         }
         Update: {
           chat_id?: string
+          contact?: string | null
           created_at?: string
           envoyé?: boolean
           id?: number
@@ -332,8 +370,69 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "messages_whatsapp_contact_fkey"
+            columns: ["contact"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["Number"]
+          },
+          {
             foreignKeyName: "messages_whatsapp_id_user_fkey"
             columns: ["id_user"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_status: {
+        Row: {
+          created_at: string
+          id: number
+          nom: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          nom?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          nom?: string | null
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          created_at: string
+          id: number
+          statu: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          statu?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          statu?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_statu_fkey"
+            columns: ["statu"]
+            isOneToOne: false
+            referencedRelation: "order_status"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
