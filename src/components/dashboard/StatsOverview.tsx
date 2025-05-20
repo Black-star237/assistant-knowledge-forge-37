@@ -1,3 +1,4 @@
+
 import { Bookmark, FileText, HelpCircle, Info, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -122,7 +123,7 @@ export function StatsOverview({ data, isLoading }: StatsOverviewProps) {
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 transparent-grid">
+    <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 transparent-grid">
       {stats.map((stat) => (
         <StatCard key={stat.title} {...stat} />
       ))}

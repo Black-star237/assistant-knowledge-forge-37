@@ -148,7 +148,7 @@ const Index = () => {
 
               <section>
                 <h2 className="mb-4 text-xl font-semibold">Gestion de l'assistant</h2>
-                <div className="grid gap-6 grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 transparent-grid">
+                <div className="grid gap-6 grid-cols-2 md:grid-cols-2 lg:grid-cols-2 transparent-grid">
                   <DashboardCard
                     title="Coupons"
                     description="Paris disponibles pour vos clients"
