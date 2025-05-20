@@ -23,7 +23,7 @@ export function StatCard({
   isLoading,
 }: StatCardData) {
   return (
-    <div className="rounded-lg border border-border/40 bg-transparent backdrop-blur-sm p-4 transition-all">
+    <div className="rounded-lg border border-border/40 bg-white dark:bg-black/60 shadow-sm backdrop-blur-sm p-4 transition-all">
       <div className="flex items-center justify-between">
         <div className="text-sm font-medium text-muted-foreground">{title}</div>
         <div className="rounded-full bg-primary/10 p-2 text-primary">{icon}</div>

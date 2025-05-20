@@ -102,7 +102,7 @@ const Index = () => {
               
               <section className="mb-8">
                 <h2 className="mb-4 text-xl font-semibold">Activité récente</h2>
-                <div className="rounded-xl border border-border/40 p-6 glassmorphism">
+                <div className="rounded-xl border border-white/20 bg-white dark:bg-black/60 shadow-sm p-6">
                   <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-full bg-assistant flex items-center justify-center shrink-0">
                       <MessageSquare className="h-6 w-6 text-white" />
@@ -117,25 +117,25 @@ const Index = () => {
                   
                   <div className="mt-6 space-y-4">
                     <div className="grid gap-2 grid-cols-2 sm:grid-cols-2 md:grid-cols-4 transparent-grid">
-                      <div className="flex items-center gap-2 rounded-lg border border-border/30 p-4 bg-white/30 dark:bg-black/20 backdrop-blur-sm">
+                      <div className="flex items-center gap-2 rounded-lg border border-white/20 dark:border-white/10 p-4 bg-white dark:bg-black/40 shadow-sm">
                         <div className="h-2 w-2 rounded-full bg-green-500"></div>
                         <div className="text-sm">
                           <span className="font-medium">24</span> conversations réussies
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 rounded-lg border border-border/30 p-4 bg-white/30 dark:bg-black/20 backdrop-blur-sm">
+                      <div className="flex items-center gap-2 rounded-lg border border-white/20 dark:border-white/10 p-4 bg-white dark:bg-black/40 shadow-sm">
                         <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
                         <div className="text-sm">
                           <span className="font-medium">3</span> conversations transférées
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 rounded-lg border border-border/30 p-4 bg-white/30 dark:bg-black/20 backdrop-blur-sm">
+                      <div className="flex items-center gap-2 rounded-lg border border-white/20 dark:border-white/10 p-4 bg-white dark:bg-black/40 shadow-sm">
                         <div className="h-2 w-2 rounded-full bg-red-500"></div>
                         <div className="text-sm">
                           <span className="font-medium">1</span> conversations échouées
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 rounded-lg border border-border/30 p-4 bg-white/30 dark:bg-black/20 backdrop-blur-sm">
+                      <div className="flex items-center gap-2 rounded-lg border border-white/20 dark:border-white/10 p-4 bg-white dark:bg-black/40 shadow-sm">
                         <div className="h-2 w-2 rounded-full bg-blue-500"></div>
                         <div className="text-sm">
                           <span className="font-medium">5</span> nouveaux clients

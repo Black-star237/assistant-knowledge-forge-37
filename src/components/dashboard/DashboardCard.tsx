@@ -64,7 +64,7 @@ export function DashboardCard({
 
   return (
     <Card className={cn(
-      "overflow-hidden transition-all hover:shadow-md rounded-xl backdrop-blur-md bg-white/80 dark:bg-black/40",
+      "overflow-hidden transition-all hover:shadow-md rounded-xl bg-white dark:bg-black/60 shadow-sm",
       getColorClass(),
       className
     )}>
@@ -81,7 +81,7 @@ export function DashboardCard({
         <div>{children}</div>
       </CardContent>
       {(footer || footerAction) && (
-        <CardFooter className="border-t border-white/10 dark:border-white/5 bg-transparent px-6 py-3">
+        <CardFooter className="border-t border-white/20 dark:border-white/5 bg-white/50 dark:bg-black/40 px-6 py-3">
           {footer || (
             <div className="flex w-full justify-end">
               <Button variant="ghost" size="sm" asChild className="hover:bg-background/50">
