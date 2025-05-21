@@ -242,7 +242,7 @@ const LicenceWhatsapp = () => {
       console.log("Failure URL:", failureUrl);
       
       const paymentDetails = {
-        amount: 20600,
+        amount: 200,
         shop_name: "bot whatsapp",
         message: "Achat d'une licence WhatsApp",
         success_url: successUrl,
