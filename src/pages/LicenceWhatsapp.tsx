@@ -15,6 +15,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { waApiService } from "@/services/waapi";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+
+// Interface for Lygos Payment Response
+interface LygosPaymentResponse {
+  status: string;
+  message: string;
+  data?: {
+    checkout_url: string;
+  };
+  error?: string;
+}
 
 const LicenceWhatsapp = () => {
   const { toast } = useToast();
@@ -24,6 +35,8 @@ const LicenceWhatsapp = () => {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [connectionCode, setConnectionCode] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
 
   // Fetch user profile to check if solvable
   const { data: userProfile, isLoading: isUserProfileLoading } = useQuery({
@@ -202,58 +215,102 @@ const LicenceWhatsapp = () => {
     }
   };
 
-  // Handle purchase Lygos payment gateway
+  // Handle purchase Lygos payment gateway with improved debugging and error handling
   const handlePurchase = async () => {
     setIsLoading(true);
-
+    setPaymentError(null);
+    setDebugInfo(null);
+    
     try {
       // Generate unique ID for order
       const orderId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      console.log("Generated order ID:", orderId);
       
-      // Call Lygos API to create payment gateway
+      // Define payment details with BASE_URL for redirections
+      const BASE_URL = window.location.origin;
+      const successUrl = `${BASE_URL}/licence-whatsapp?success=true&orderId=${orderId}`;
+      const failureUrl = `${BASE_URL}/licence-whatsapp?failure=true&orderId=${orderId}`;
+      
+      console.log("Success URL:", successUrl);
+      console.log("Failure URL:", failureUrl);
+      
+      const paymentDetails = {
+        amount: 20600,
+        shop_name: "bot whatsapp",
+        message: "Achat d'une licence WhatsApp",
+        success_url: successUrl,
+        failure_url: failureUrl,
+        order_id: orderId
+      };
+      
+      console.log("Payment details prepared:", paymentDetails);
+      setDebugInfo("Préparation du paiement - détails créés");
+      
+      // Verify API key presence
+      const apiKey = "lygosapp-1b0aabd2-e115-4224-bc8f-254d355d62a4";
+      if (!apiKey) {
+        throw new Error("Clé API Lygos manquante");
+      }
+      
+      setDebugInfo(prev => `${prev}\nConnexion à l'API Lygos...`);
+      
+      // Call Lygos API to create payment gateway with improved error handling
       const response = await fetch("https://api.lygosapp.com/v1/gateway", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "api-key": "lygosapp-1b0aabd2-e115-4224-bc8f-254d355d62a4"
+          "api-key": apiKey
         },
-        body: JSON.stringify({
-          amount: 20600,
-          shop_name: "bot whatsapp",
-          message: "Achat d'une licence WhatsApp",
-          success_url: `${window.location.origin}/licence-whatsapp?success=true&orderId=${orderId}`,
-          failure_url: `${window.location.origin}/licence-whatsapp?failure=true&orderId=${orderId}`,
-          order_id: orderId
-        })
+        body: JSON.stringify(paymentDetails)
       });
-
-      const data = await response.json();
+      
+      setDebugInfo(prev => `${prev}\nRéponse reçue: status ${response.status}`);
+      console.log("Lygos API response status:", response.status);
+      
+      // Handle non-JSON responses
+      let data: LygosPaymentResponse;
+      try {
+        data = await response.json();
+        console.log("Payment gateway response:", data);
+        setDebugInfo(prev => `${prev}\nDonnées de réponse: ${JSON.stringify(data).substring(0, 100)}...`);
+      } catch (jsonError) {
+        console.error("Failed to parse JSON response:", jsonError);
+        throw new Error(`Erreur de format de réponse: ${response.statusText}`);
+      }
       
       if (!response.ok) {
-        throw new Error(data.message || "Erreur lors de la création de la passerelle de paiement");
+        const errorMessage = data.message || data.error || "Erreur inconnue";
+        console.error("Payment gateway error:", errorMessage);
+        throw new Error(`Erreur Lygos: ${errorMessage}`);
       }
-
-      console.log("Payment gateway created:", data);
       
-      // Redirect to payment page
-      if (data.checkout_url) {
-        window.location.href = data.checkout_url;
-      } else {
+      // Verify checkout URL presence
+      if (!data.data?.checkout_url) {
         throw new Error("URL de paiement non trouvée dans la réponse");
       }
-
+      
+      setDebugInfo(prev => `${prev}\nURL de paiement obtenue: ${data.data.checkout_url.substring(0, 30)}...`);
+      console.log("Redirecting to checkout URL:", data.data.checkout_url);
+      
+      // Redirect to payment page
+      window.location.href = data.data.checkout_url;
+      
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
       console.error("Error purchasing:", error);
+      setPaymentError(errorMessage);
+      
       toast({
         variant: "destructive",
         title: "Erreur d'achat",
-        description: "Une erreur est survenue lors de la création du paiement",
+        description: `Échec du paiement: ${errorMessage}`,
       });
+      
       setIsLoading(false);
     }
   };
 
-  // Check for payment success or failure from URL params
+  // Check for payment success or failure from URL params with improved logging
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const success = urlParams.get('success');
@@ -268,7 +325,7 @@ const LicenceWhatsapp = () => {
         .from("user_profiles")
         .update({ solvable: true })
         .eq("id", user.id)
-        .then(({ error }) => {
+        .then(({ error, data }) => {
           if (error) {
             console.error("Error updating user profile:", error);
             toast({
@@ -277,6 +334,7 @@ const LicenceWhatsapp = () => {
               description: "Impossible de mettre à jour votre profil"
             });
           } else {
+            console.log("User profile updated successfully:", data);
             toast({
               title: "Paiement réussi",
               description: "Votre licence WhatsApp sera disponible sous peu"
@@ -518,6 +576,30 @@ const LicenceWhatsapp = () => {
                       Vous n'avez pas encore de licence WhatsApp pour votre assistant.
                       Achetez une licence pour commencer à utiliser WhatsApp avec votre assistant.
                     </p>
+                    
+                    {/* Debug Info Display */}
+                    {(paymentError || debugInfo) && (
+                      <div className="mt-6 mb-6">
+                        <Alert variant="destructive" className="mb-4">
+                          <AlertTitle>Erreur de paiement détectée</AlertTitle>
+                          <AlertDescription>
+                            {paymentError && (
+                              <p className="font-medium text-red-600 mb-2">
+                                {paymentError}
+                              </p>
+                            )}
+                            {debugInfo && (
+                              <div className="mt-2">
+                                <p className="font-medium">Détails techniques:</p>
+                                <pre className="bg-gray-100 p-2 rounded text-xs overflow-auto mt-1 text-left whitespace-pre-wrap">
+                                  {debugInfo}
+                                </pre>
+                              </div>
+                            )}
+                          </AlertDescription>
+                        </Alert>
+                      </div>
+                    )}
                   </CardContent>
                   <CardFooter className="justify-center">
                     <Button onClick={handlePurchase} disabled={isLoading}>
