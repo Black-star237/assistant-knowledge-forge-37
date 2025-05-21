@@ -198,15 +198,15 @@ const Index = () => {
               </section>
               
               <section className="mb-8">
-                <h2 className="mb-4 text-xl font-semibold">Activité récente</h2>
+                <h2 className="mb-4 text-xl font-semibold text-white dark:text-white">Activité récente</h2>
                 <div className="rounded-xl border border-white/20 bg-black/60 backdrop-blur-md shadow-sm p-6">
                   <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-full bg-assistant flex items-center justify-center shrink-0">
                       <MessageSquare className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-medium">Votre assistant est actif</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <h3 className="font-medium text-white dark:text-white">Votre assistant est actif</h3>
+                      <p className="text-sm text-white dark:text-white">
                         Il a répondu à <span className="font-medium">{activityStats?.successful ?? 0} messages</span> ces dernières 24 heures
                       </p>
                     </div>
@@ -216,19 +216,19 @@ const Index = () => {
                     <div className="grid gap-2 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 transparent-grid">
                       <div className="flex items-center gap-2 rounded-lg border border-white/20 dark:border-white/10 p-4 bg-black/50 backdrop-blur-md shadow-sm">
                         <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                        <div className="text-sm">
+                        <div className="text-sm text-white dark:text-white">
                           <span className="font-medium">{isLoadingActivityStats ? <Loader2 className="h-3 w-3 inline animate-spin" /> : activityStats?.successful}</span> conversations réussies
                         </div>
                       </div>
                       <div className="flex items-center gap-2 rounded-lg border border-white/20 dark:border-white/10 p-4 bg-black/50 backdrop-blur-md shadow-sm">
                         <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
-                        <div className="text-sm">
+                        <div className="text-sm text-white dark:text-white">
                           <span className="font-medium">{isLoadingActivityStats ? <Loader2 className="h-3 w-3 inline animate-spin" /> : activityStats?.inProgress}</span> conversations en cours
                         </div>
                       </div>
                       <div className="flex items-center gap-2 rounded-lg border border-white/20 dark:border-white/10 p-4 bg-black/50 backdrop-blur-md shadow-sm">
                         <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                        <div className="text-sm">
+                        <div className="text-sm text-white dark:text-white">
                           <span className="font-medium">{isLoadingActivityStats ? <Loader2 className="h-3 w-3 inline animate-spin" /> : activityStats?.newClients}</span> nouveaux clients
                         </div>
                       </div>
