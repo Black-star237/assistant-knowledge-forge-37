@@ -19,11 +19,18 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 // Interface for Lygos Payment Response
 interface LygosPaymentResponse {
-  status: string;
-  message: string;
-  data?: {
-    checkout_url: string;
-  };
+  status?: string;
+  message?: string;
+  id?: string;
+  amount?: number;
+  currency?: string;
+  shop_name?: string;
+  user_id?: string;
+  creation_date?: string;
+  link?: string;
+  order_id?: string;
+  success_url?: string;
+  failure_url?: string;
   error?: string;
 }
 
@@ -284,16 +291,16 @@ const LicenceWhatsapp = () => {
         throw new Error(`Erreur Lygos: ${errorMessage}`);
       }
       
-      // Verify checkout URL presence
-      if (!data.data?.checkout_url) {
-        throw new Error("URL de paiement non trouvée dans la réponse");
+      // Verify link presence - using the property "link" instead of "checkout_url"
+      if (!data.link) {
+        throw new Error("URL de paiement (link) non trouvée dans la réponse");
       }
       
-      setDebugInfo(prev => `${prev}\nURL de paiement obtenue: ${data.data.checkout_url.substring(0, 30)}...`);
-      console.log("Redirecting to checkout URL:", data.data.checkout_url);
+      setDebugInfo(prev => `${prev}\nURL de paiement obtenue: ${data.link.substring(0, 30)}...`);
+      console.log("Redirecting to checkout URL:", data.link);
       
       // Redirect to payment page
-      window.location.href = data.data.checkout_url;
+      window.location.href = data.link;
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
